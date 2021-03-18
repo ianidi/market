@@ -46,10 +46,7 @@ contract Market is Ownable {
     AggregatorV3Interface internal priceFeed;
     IERC20 public collateral;
 
-    constructor() public {
-        MarketStruct memory marketStruct;
-        currentMarketID++;
-    }
+    constructor() public {}
 
     //TODO:
     // modifier onlyWhitelisted() {
@@ -204,8 +201,8 @@ contract Market is Ownable {
     //Buy new token pair for collateral token
     function buy(
         uint256 _marketID,
-        address token,
-        uint256 amount
+        // address token,
+        // uint256 amount
     ) public {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
