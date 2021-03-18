@@ -101,11 +101,15 @@ contract Market is Ownable {
       
     }
 
-    //TODO: change market duration
-
+    //TODO: change market function?
 
     function redeem(uint256 _marketID, address token, uint256 amount) public {
       
+    }
+
+    //TODO: market info read functions
+    function viewMarketIsExist(uint256 _marketID) public view returns (uint256) {
+      return markets[_marketID].isExist;
     }
 }
 
@@ -120,14 +124,7 @@ contract Market is Ownable {
         users[msg.sender] = userStruct;
         userList[currUserID] = msg.sender;
 
-market info read functions
-    function viewUserStarExpired(address _user, uint256 _star)
-        public
-        view
-        returns (uint256)
-    {
-        return users[_user].starExpired[_star];
-    }
+
 
 
 marketid++
