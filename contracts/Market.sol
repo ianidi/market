@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.0;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
@@ -14,24 +15,28 @@ contract Market is Ownable {
     event Paused(uint256 indexed marketID, uint256 _time);
     event Resumed(uint256 indexed marketID, uint256 _time);
     event Closed(uint256 indexed marketID, uint256 _time);
-    event Redemption(uint256 indexed marketID, uint256 indexed memberID, uint256 _time);
+    event Redemption(
+        uint256 indexed marketID,
+        uint256 indexed memberID,
+        uint256 _time
+    );
 
     enum Status {Running, Paused, Closed}
 
     struct MarketStruct {
         bool isExist;
-        Status public status;
-        uint256 public marketID;
-        uint256 public baseCurrencyID;
-        int256 public initialPrice;
-        int256 public finalPrice;
-        uint256 public created;
-        uint256 public duration;
-        uint256 public totalSupply;
-        uint256 public totalRedemption;
-        address public collateralToken;
-        address public bearToken;
-        address public bullToken;
+        Status status;
+        uint256 marketID;
+        uint256 baseCurrencyID;
+        int256 initialPrice;
+        int256 finalPrice;
+        uint256 created;
+        uint256 duration;
+        uint256 totalSupply;
+        uint256 totalRedemption;
+        address collateralToken;
+        address bearToken;
+        address bullToken;
     }
 
     mapping(uint256 => MarketStruct) public markets;
@@ -42,16 +47,11 @@ contract Market is Ownable {
     address public manager;
 
     AggregatorV3Interface internal priceFeed;
+    IERC20 public collateral;
 
     constructor() public {
         MarketStruct memory marketStruct;
         currentMarketID++;
-    }
-
-    //Market has to be in given stage
-    modifier atStage(Stage _stage) {
-      require(stage == _stage);
-      _;
     }
 
     // modifier onlyWhitelisted() {
@@ -62,12 +62,12 @@ contract Market is Ownable {
     /**
      * Returns the latest price
      */
-    function getLatestPrice() public view returns (int) {
+    function getLatestPrice() public view returns (int256) {
         (
-            uint80 roundID, 
-            int price,
-            uint startedAt,
-            uint timeStamp,
+            uint80 roundID,
+            int256 price,
+            uint256 startedAt,
+            uint256 timeStamp,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
         return price;
@@ -81,15 +81,15 @@ contract Market is Ownable {
      * ROUNDID VALUES:
      *    InValid:      18446744073709562300
      *    Valid:        18446744073709562301
-     *    
+     *
      * @dev A timestamp with zero value means the round is not complete and should not be used.
      */
     function getHistoricalPrice(uint80 roundId) public view returns (int256) {
         (
-            uint80 id, 
-            int price,
-            uint startedAt,
-            uint timeStamp,
+            uint80 id,
+            int256 price,
+            uint256 startedAt,
+            uint256 timeStamp,
             uint80 answeredInRound
         ) = priceFeed.getRoundData(roundId);
         require(timeStamp > 0, "Round not complete");
@@ -97,62 +97,138 @@ contract Market is Ownable {
     }
 
     //TODO: Whitelist modifier baseCurrency chainlink
-    function createMarket(address _ownerWallet) public onlyOwner {
-      //contract factory (ERC20)
-      //call balancer
+    function createMarket(
+        uint256 _baseCurrencyID,
+        uint256 duration,
+        address _bearToken,
+        address _bullToken
+    ) public onlyOwner {
+        //TODO: contract factory (ERC20)
 
-        // userStruct = MarketStruct({
-        //     isExist: true,
-        //     id: currUserID,
-        //     referrerID: _referrerID,
-        //     referrerIDInitial: _referrerIDInitial,
-        //     referral: new address[](0)
-        // });
+        //TODO: validate duration
+        //TODO: validate _bearToken
+        //TODO: validate _bullToken
 
-        // users[msg.sender] = userStruct;
-        // userList[currUserID] = msg.sender;
+        uint256 created;
+        int256 _initialPrice;
+        address _chainlinkPriceFeed;
 
-      //marketid++
+        //TODO: get chainlink price feed by _baseCurrencyID
+        _chainlinkPriceFeed = 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
+
+        //TODO: throw on chainlink error
+        _initialPrice = getLatestPrice(
+            AggregatorV3Interface(_chainlinkPriceFeed)
+        );
+        _timestamp = now;
+
+        //TODO: accept _collateralToken as function parameter
+        address _collateralToken = 0xdac17f958d2ee523a2206206994597c13d831ec7; //USDT
+
+        marketStruct = MarketStruct({
+            isExist: true,
+            status: Status.Running,
+            marketID: currentMarketID,
+            baseCurrencyID: _baseCurrencyID,
+            initialPrice: _initialPrice,
+            finalPrice: 0,
+            created: _timestamp,
+            duration: _duration,
+            totalSupply: 0,
+            totalRedemption: 0,
+            collateralToken: _collateralToken,
+            bearToken: _bearToken,
+            bullToken: _bullToken
+        });
+
+        markets[currentMarketID] = marketStruct;
+
+        emit Created(currentMarketID, _timestamp);
+
+        //Increment current market ID
+        currentMarketID++;
+
+        //TODO: call balancer
     }
 
-    function pauseMarket(uint256 _marketID) public onlyOwner {
-      
+    function pause(uint256 _marketID) public onlyOwner {
+        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].status == Status.Running, "Invalid status");
+
+        stage = Stage.Paused;
+        emit Paused();
     }
 
-    function resumeMarket(uint256 _marketID) public onlyOwner {
-      
+    function resume(uint256 _marketID) public onlyOwner {
+        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].status == Status.Paused, "Invalid status");
+
+        stage = Stage.Running;
+        emit Resumed();
     }
 
-    function closeMarket(uint256 _marketID) public onlyOwner {
-      require(stage == Stage.Running || stage == Stage.Paused, "This Market has already been closed");
+    function close(uint256 _marketID) public onlyOwner {
+        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(
+            markets[_marketID].status == Status.Running ||
+                markets[_marketID].status == Status.Paused,
+            "This market has already been closed"
+        );
 
-
-      stage = Stage.Closed;
-      emit Closed();
+        stage = Stage.Closed;
+        emit Closed();
     }
 
-    //TODO: change market function?
-
-    //Buy new token ppair in exchange to collateral token
-    function buy(uint256 _marketID, address token, uint256 amount) public {
-      //mint tokens
-      //call balancer
+    function transferToMe(
+        address _owner,
+        address _token,
+        unit _amount
+    ) public {
+        ERC20(_token).transferFrom(_owner, address(this), _amount);
     }
 
-    function redeem(uint256 _marketID, address token, uint256 amount) public {
-      //call balancer
+    //Buy new token pair for collateral token
+    function buy(
+        uint256 _marketID,
+        address token,
+        uint256 amount
+    ) public {
+        //mint tokens
+        //call balancer
+    }
 
-      pmSystem.safeTransferFrom(
-        address(this),
-        owner(),
-        positionId,
-        pmSystem.balanceOf(address(this), positionId),
-        ""
-      );
+    function redeem(
+        uint256 _marketID,
+        address token,
+        uint256 amount
+    ) public {
+        //call balancer
+
+        pmSystem.safeTransferFrom(
+            address(this),
+            owner(),
+            positionId,
+            pmSystem.balanceOf(address(this), positionId),
+            ""
+        );
+
+        require(
+            collateralToken.transferFrom(
+                msg.sender,
+                address(this),
+                uint256(fundingChange)
+            ) &&
+                collateralToken.approve(
+                    address(pmSystem),
+                    uint256(fundingChange)
+                )
+        );
+
+        require(collateralToken.transfer(owner(), uint256(-fundingChange)));
     }
 
     //TODO: market info read functions
     function viewMarketIsExist(uint256 _marketID) public view returns (bool) {
-      return markets[_marketID].isExist;
+        return markets[_marketID].isExist;
     }
 }
