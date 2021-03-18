@@ -100,6 +100,19 @@ contract Market is Ownable {
     function createMarket(address _ownerWallet) public onlyOwner {
       //contract factory (ERC20)
       //call balancer
+
+        // userStruct = MarketStruct({
+        //     isExist: true,
+        //     id: currUserID,
+        //     referrerID: _referrerID,
+        //     referrerIDInitial: _referrerIDInitial,
+        //     referral: new address[](0)
+        // });
+
+        // users[msg.sender] = userStruct;
+        // userList[currUserID] = msg.sender;
+
+      //marketid++
     }
 
     function pauseMarket(uint256 _marketID) public onlyOwner {
@@ -143,28 +156,3 @@ contract Market is Ownable {
       return markets[_marketID].isExist;
     }
 }
-
-        userStruct = MarketStruct({
-            isExist: true,
-            id: currUserID,
-            referrerID: _referrerID,
-            referrerIDInitial: _referrerIDInitial,
-            referral: new address[](0)
-        });
-
-        users[msg.sender] = userStruct;
-        userList[currUserID] = msg.sender;
-
-
-
-
-marketid++
-
-
-    function close() public onlyOwner {
-
-        for (uint256 i = 0; i < atomicOutcomeSlotCount; i++) {
-            uint256 positionId = generateAtomicPositionId(i);
-
-        }
-    }
