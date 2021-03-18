@@ -199,11 +199,9 @@ contract Market is Ownable {
     // }
 
     //Buy new token pair for collateral token
-    function buy(
-        uint256 _marketID,
-        // address token,
-        // uint256 amount
-    ) public {
+    function buy(uint256 _marketID) public // address token,
+    // uint256 amount
+    {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
 
