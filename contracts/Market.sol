@@ -39,7 +39,6 @@ contract Market is Ownable {
 
     mapping(uint256 => MarketStruct) public markets;
     mapping(address => uint256) public tokenToMarket;
-    mapping(address => uint256) public winningTokenToMarket;
     mapping(uint256 => address) public baseCurrencyToChainlinkFeed;
 
     uint256 public currentMarketID = 0;
@@ -216,16 +215,17 @@ contract Market is Ownable {
         markets[_marketID].status = Status.Closed;
         markets[_marketID].finalPrice = _finalPrice;
 
-        //Assign the winning token to market, so users can redeem collateral
-        winningTokenToMarket[_bearToken] = _marketID;
-
         emit Closed(_marketID, now);
     }
 
+    function buy() external {
+        require(token.transferFrom(msg.sender, this, amount));
+        // having now received <amount> tokens from the sender, deliver whatever was
+        // purchased, etc.
+    }
+
     //Buy new token pair for collateral token
-    function buy(
-        uint256 _marketID // uint256 amount
-    ) public {
+    function buy(uint256 _marketID, uint256 amount) external {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
 
@@ -235,9 +235,8 @@ contract Market is Ownable {
         //emit buy event
     }
 
-    function redeem() public // uint256 amount
-    {
-        //get marketid from token address using winningTokenToMarket
+    function redeem(uint256 _marketID, uint256 amount) external {
+        //determine winning token address by market id
         // require(markets[_marketID].isExist, "Market doesn't exist");
         // require(markets[_marketID].status == Status.Running, "Invalid status");
         //send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
