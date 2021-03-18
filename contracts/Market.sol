@@ -22,7 +22,7 @@ contract Market is Ownable {
     enum Status {Running, Paused, Closed}
 
     struct MarketStruct {
-        bool isExist;
+        bool exist;
         Status status;
         uint256 marketID;
         uint256 baseCurrencyID;
@@ -141,7 +141,7 @@ contract Market is Ownable {
 
         MarketStruct memory marketStruct =
             MarketStruct({
-                isExist: true,
+                exist: true,
                 status: Status.Running,
                 marketID: currentMarketID,
                 baseCurrencyID: _baseCurrencyID,
@@ -169,7 +169,7 @@ contract Market is Ownable {
     }
 
     function pause(uint256 _marketID) public onlyOwner {
-        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
 
         markets[_marketID].status = Status.Paused;
@@ -178,7 +178,7 @@ contract Market is Ownable {
     }
 
     function resume(uint256 _marketID) public onlyOwner {
-        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Paused, "Invalid status");
 
         markets[_marketID].status = Status.Running;
@@ -187,7 +187,7 @@ contract Market is Ownable {
     }
 
     function close(uint256 _marketID) public onlyOwner {
-        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].exist, "Market doesn't exist");
         require(
             markets[_marketID].status == Status.Running ||
                 markets[_marketID].status == Status.Paused,
@@ -220,13 +220,13 @@ contract Market is Ownable {
 
     //Buy new token pair for collateral token
     function buy(uint256 _marketID, uint256 amount) external {
-        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
         require(amount > 0, "Invalid amount");
 
         //require(token.transferFrom(msg.sender, this, amount));
         //deposit collateral in accordance to markeetid collateral
-        //mint both tokens and send to user
+        //mint both tokens and send them to user
 
         //Increase total deposited collateral
         markets[_marketID].totalDeposit = SafeMath.add(
@@ -238,7 +238,7 @@ contract Market is Ownable {
     }
 
     function redeem(uint256 _marketID, uint256 amount) external {
-        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Closed, "Invalid status");
         require(amount > 0, "Invalid amount");
         require(
@@ -262,7 +262,7 @@ contract Market is Ownable {
     //TODO: baseCurrencyToChainlinkFeed edit functions
 
     //TODO: market info read functions
-    function viewMarketIsExist(uint256 _marketID) public view returns (bool) {
-        return markets[_marketID].isExist;
+    function viewMarketExist(uint256 _marketID) public view returns (bool) {
+        return markets[_marketID].exist;
     }
 }
