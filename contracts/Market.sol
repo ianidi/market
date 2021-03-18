@@ -228,6 +228,7 @@ contract Market is Ownable {
     function buy(uint256 _marketID, uint256 amount) external {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
+        require(amount > 0, "Invalid amount");
 
         //deposit collateral in accordance to markeetid collateral
         //mint both tokens and send to user
@@ -236,12 +237,20 @@ contract Market is Ownable {
     }
 
     function redeem(uint256 _marketID, uint256 amount) external {
+        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].status == Status.Closed, "Invalid status");
+        require(amount > 0, "Invalid amount");
+
         //determine winning token address by market id
-        // require(markets[_marketID].isExist, "Market doesn't exist");
-        // require(markets[_marketID].status == Status.Running, "Invalid status");
         //send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
-        //increase uint256 totalRedemption;
-        // emit redeem event
+
+        //Increase total redemed tokens
+        markets[_marketID].totalRedemption = SafeMath.add(
+            markets[_marketID].totalRedemption,
+            amount
+        );
+
+        emit Redeem(_marketID, now);
     }
 
     //TODO: baseCurrencyToChainlinkFeed edit functions
