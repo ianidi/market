@@ -111,7 +111,7 @@ contract Market is Ownable {
         address _chainlinkPriceFeed;
 
         //TODO: get chainlink price feed by _baseCurrencyID
-        _chainlinkPriceFeed = 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
+        _chainlinkPriceFeed = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
 
         //TODO: throw on chainlink error
         _initialPrice = getLatestPrice(
@@ -174,7 +174,7 @@ contract Market is Ownable {
         );
 
         //TODO: require created + duration > now
-        //TODO: query chainlink
+        //TODO: query chainlink by valid timestamp
         //TODO: push to winning tokens array => marketid
         //send collateral in accordance to markeetid collateral
 
