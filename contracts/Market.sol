@@ -218,18 +218,13 @@ contract Market is Ownable {
         emit Closed(_marketID, now);
     }
 
-    function buy() external {
-        require(token.transferFrom(msg.sender, this, amount));
-        // having now received <amount> tokens from the sender, deliver whatever was
-        // purchased, etc.
-    }
-
     //Buy new token pair for collateral token
     function buy(uint256 _marketID, uint256 amount) external {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
         require(amount > 0, "Invalid amount");
 
+        //require(token.transferFrom(msg.sender, this, amount));
         //deposit collateral in accordance to markeetid collateral
         //mint both tokens and send to user
 
