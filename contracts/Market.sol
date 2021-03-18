@@ -9,6 +9,7 @@ import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 // SafeMath.sub
 
 contract Market is Ownable {
+    //TODO: add events
     event Created(uint256 indexed marketID, uint256 _time);
     event Paused(uint256 indexed marketID, uint256 _time);
     event Resumed(uint256 indexed marketID, uint256 _time);
@@ -83,17 +84,30 @@ contract Market is Ownable {
         require(timeStamp > 0, "Round not complete");
         return price;
     }
+
+    function createMarket(address _ownerWallet) public onlyOwner {
+      
+    }
+
+    function pauseMarket(uint256 _marketID) public onlyOwner {
+      
+    }
+
+    function resumeMarket(uint256 _marketID) public onlyOwner {
+      
+    }
+
+    function closeMarket(uint256 _marketID) public onlyOwner {
+      
+    }
+
+    //TODO: change market duration
+
+
+    function redeem(uint256 _marketID, address token, uint256 amount) public {
+      
+    }
 }
-
-createmarket onlymanager
-pause
-resume
-changeduration
-close
-
-
-redeem
-
 
         userStruct = MarketStruct({
             isExist: true,
@@ -106,6 +120,7 @@ redeem
         users[msg.sender] = userStruct;
         userList[currUserID] = msg.sender;
 
+market info read functions
     function viewUserStarExpired(address _user, uint256 _star)
         public
         view
@@ -114,14 +129,6 @@ redeem
         return users[_user].starExpired[_star];
     }
 
-
-
-
-    AggregatorV3Interface internal priceFeed;
-
-        constructor() public {
-          
-    }
 
 marketid++
 
@@ -158,31 +165,7 @@ buy
     call balancer
 
 
-    /**
-     * Returns the latest price
-     */
-    function getLatestPrice(AggregatorV3Interface feed) public view returns (int256) {
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = feed.latestRoundData();
-        return price;
-    }
-
-
-
 contract factory
-
-
-market info read functions
-
-
-events
-
-
 
 
 
