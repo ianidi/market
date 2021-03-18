@@ -235,11 +235,8 @@ contract Market is Ownable {
         //emit buy event
     }
 
-    function redeem(
-        uint256 _marketID,
-        address token,
-        uint256 amount
-    ) public {
+    function redeem() public // uint256 amount
+    {
         //get marketid from token address using winningTokenToMarket
         //send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
         //increase uint256 totalRedemption;
