@@ -123,39 +123,36 @@ contract Market is Ownable {
         //TODO: Contract factory for two ERC20 tokens
         //TODO: validate _bearToken is a valid ERC20 contract
         //TODO: validate _bullToken is a valid ERC20 contract
-
-        int256 _initialPrice;
-        address _chainlinkPriceFeed;
-        address _collateralToken;
-        MarketStruct memory marketStruct;
+        //TODO: Contract factory for balancer contract
 
         //Get chainlink price feed by _baseCurrencyID
-        _chainlinkPriceFeed = baseCurrencyToChainlinkFeed[_baseCurrencyID];
+        address _chainlinkPriceFeed =
+            baseCurrencyToChainlinkFeed[_baseCurrencyID];
 
-        _initialPrice = getLatestPrice(
-            AggregatorV3Interface(_chainlinkPriceFeed)
-        );
+        int256 _initialPrice =
+            getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
 
         require(_initialPrice > 0, "Chainlink error");
 
-        //TODO: accept _collateralToken as function parameter
-        _collateralToken = 0xdAC17F958D2ee523a2206206994597C13D831ec7; //USDT
+        //TODO: accept _collateralToken as function parameter and validate is a valid ERC20 contract
+        address _collateralToken = 0xdAC17F958D2ee523a2206206994597C13D831ec7; //USDT
 
-        marketStruct = MarketStruct({
-            isExist: true,
-            status: Status.Running,
-            marketID: currentMarketID,
-            baseCurrencyID: _baseCurrencyID,
-            initialPrice: _initialPrice,
-            finalPrice: 0,
-            created: now,
-            duration: _duration,
-            totalSupply: 0,
-            totalRedemption: 0,
-            collateralToken: _collateralToken,
-            bearToken: _bearToken,
-            bullToken: _bullToken
-        });
+        MarketStruct memory marketStruct =
+            MarketStruct({
+                isExist: true,
+                status: Status.Running,
+                marketID: currentMarketID,
+                baseCurrencyID: _baseCurrencyID,
+                initialPrice: _initialPrice,
+                finalPrice: 0,
+                created: now,
+                duration: _duration,
+                totalSupply: 0,
+                totalRedemption: 0,
+                collateralToken: _collateralToken,
+                bearToken: _bearToken,
+                bullToken: _bullToken
+            });
 
         markets[currentMarketID] = marketStruct;
 
@@ -163,8 +160,6 @@ contract Market is Ownable {
 
         //Increment current market ID
         currentMarketID++;
-
-        //TODO: create balancer contract
     }
 
     function pause(uint256 _marketID) public onlyOwner {
@@ -200,12 +195,21 @@ contract Market is Ownable {
             "Market closing time hasn't yet arrived"
         );
 
-        //TODO: require created + duration > now
+        //Get chainlink price feed by _baseCurrencyID
+        address _chainlinkPriceFeed =
+            baseCurrencyToChainlinkFeed[_baseCurrencyID];
+
         //TODO: query chainlink by valid timestamp
-        //TODO: push to winning tokens array => marketid
-        //send collateral in accordance to markeetid collateral
+        int256 _finalPrice =
+            getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
+
+        require(_initialPrice > 0, "Chainlink error");
+        require(markets[_marketID].initialPrice != _finalPrice, "Price error");
 
         markets[_marketID].status = Status.Closed;
+        markets[_marketID].finalPrice = _finalPrice;
+
+        //TODO: push to winning tokens array => marketid
 
         emit Closed(_marketID, now);
     }
@@ -227,6 +231,7 @@ contract Market is Ownable {
 
         //deposit collateral
         //mint tokens
+        // uint256 totalSupply;
         //emit buy event
     }
 
@@ -235,6 +240,8 @@ contract Market is Ownable {
         address token,
         uint256 amount
     ) public {
+        //send collateral in accordance to markeetid collateral
+        // uint256 totalRedemption;
         // pmSystem.safeTransferFrom(
         //     address(this),
         //     owner(),
