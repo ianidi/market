@@ -216,7 +216,8 @@ contract Market is Ownable {
         markets[_marketID].status = Status.Closed;
         markets[_marketID].finalPrice = _finalPrice;
 
-        //TODO: push to winning tokens array => marketid
+        //Assign the winning token to market, so users can redeem collateral
+        winningTokenToMarket[_bearToken] = _marketID;
 
         emit Closed(_marketID, now);
     }
