@@ -49,6 +49,7 @@ contract Market is Ownable {
     IERC20 public collateral;
 
     constructor() public {
+        currentMarketID = uint256(1);
         baseCurrencyToChainlinkFeed[
             uint256(1)
         ] = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
@@ -113,6 +114,14 @@ contract Market is Ownable {
             _duration >= 600 seconds && _duration < 365 days,
             "Invalid duration"
         );
+        require(
+            tokenToMarket[_bearToken] == 0,
+            "Bear token is already assigned to another market"
+        );
+        require(
+            tokenToMarket[_bullToken] == 0,
+            "Bull token is already assigned to another market"
+        );
 
         //TODO: Contract factory for two ERC20 tokens
         //TODO: validate _bearToken is a valid ERC20 contract
@@ -149,6 +158,10 @@ contract Market is Ownable {
             });
 
         markets[currentMarketID] = marketStruct;
+
+        //Assign bear and bull tokens to newly created market
+        tokenToMarket[_bearToken] = currentMarketID;
+        tokenToMarket[_bullToken] = currentMarketID;
 
         emit Created(currentMarketID, now);
 
@@ -256,6 +269,8 @@ contract Market is Ownable {
         // );
         // require(collateralToken.transfer(owner(), uint256(-fundingChange)));
     }
+
+    //TODO: baseCurrencyToChainlinkFeed edit functions
 
     //TODO: market info read functions
     function viewMarketIsExist(uint256 _marketID) public view returns (bool) {
