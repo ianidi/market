@@ -1,16 +1,120 @@
+// contracts/ERC20.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 
-contract Market is SafeMath {
-    // constructor() ERC721("MyCollectible", "MCO") {
-    // }
+// SafeMath.sub
+
+contract Market is Ownable {
+    event Created(uint256 indexed marketID, uint256 _time);
+    event Paused(uint256 indexed marketID, uint256 _time);
+    event Resumed(uint256 indexed marketID, uint256 _time);
+    event Closed(uint256 indexed marketID, uint256 _time);
+    event Redemption(uint256 indexed marketID, uint256 indexed memberID, uint256 _time);
+
+    enum Status {Running, Paused, Closed}
+
+    struct MarketStruct {
+        bool isExist;
+        Status public status;
+        uint256 public marketID;
+        uint256 public baseCurrencyID;
+        int256 public initialPrice;
+        int256 public finalPrice;
+        uint256 public created;
+        uint256 public duration;
+        uint256 public totalSupply;
+        uint256 public totalRedemption;
+        address public collateralToken;
+        address public bearToken;
+        address public bullToken;
+    }
+
+    mapping(uint256 => MarketStruct) public markets;
+    mapping(address => uint256) public tokenToMarketList;
+    mapping(uint256 => address) public baseCurrencyToChainlinkFeed;
+
+    uint256 public currentMarketID = 0;
+    address public manager;
+
+    AggregatorV3Interface internal priceFeed;
+
+    constructor() public {
+        MarketStruct memory marketStruct;
+        currentMarketID++;
+    }
+
+    /**
+     * Returns the latest price
+     */
+    function getLatestPrice() public view returns (int) {
+        (
+            uint80 roundID, 
+            int price,
+            uint startedAt,
+            uint timeStamp,
+            uint80 answeredInRound
+        ) = priceFeed.latestRoundData();
+        return price;
+    }
+
+    /**
+     * Returns historical price for a round id.
+     * roundId is NOT incremental. Not all roundIds are valid.
+     * You must know a valid roundId before consuming historical data.
+     *
+     * ROUNDID VALUES:
+     *    InValid:      18446744073709562300
+     *    Valid:        18446744073709562301
+     *    
+     * @dev A timestamp with zero value means the round is not complete and should not be used.
+     */
+    function getHistoricalPrice(uint80 roundId) public view returns (int256) {
+        (
+            uint80 id, 
+            int price,
+            uint startedAt,
+            uint timeStamp,
+            uint80 answeredInRound
+        ) = priceFeed.getRoundData(roundId);
+        require(timeStamp > 0, "Round not complete");
+        return price;
+    }
 }
 
+createmarket onlymanager
+pause
+resume
+changeduration
+close
 
 
+redeem
 
-        address indexed manager,
+
+        userStruct = MarketStruct({
+            isExist: true,
+            id: currUserID,
+            referrerID: _referrerID,
+            referrerIDInitial: _referrerIDInitial,
+            referral: new address[](0)
+        });
+
+        users[msg.sender] = userStruct;
+        userList[currUserID] = msg.sender;
+
+    function viewUserStarExpired(address _user, uint256 _star)
+        public
+        view
+        returns (uint256)
+    {
+        return users[_user].starExpired[_star];
+    }
+
+
 
 
     AggregatorV3Interface internal priceFeed;
@@ -23,7 +127,7 @@ marketid++
 
 Whitelist baseCurrency chainlink
 
-    enum Stage {Running, Paused, Closed}
+    
 
     modifier atStage(Stage _stage) {
         // Contract has to be in given stage
@@ -39,21 +143,7 @@ Whitelist baseCurrency chainlink
         _;
     }
 
-IERC20 public collateralToken;
 
-bear address
-bull address
-
-    int256 public initialPrice;
-    uint256 public created;
-    uint256 public duration;
-    int256 public baseCurrency;
-    status
-    
-
-    totalsupply
-
-    totalRedeem
 
     
     mapping(address => uint256) withdrawnFees;
@@ -94,14 +184,6 @@ events
 
 
 
-pause
-resume
-changeduration
-close
-
-
-redeem
-
 
 
     function close() public onlyOwner {
@@ -120,5 +202,5 @@ redeem
             );
         }
         stage = Stage.Closed;
-        emit AMMClosed();
+        emit Closed();
     }
