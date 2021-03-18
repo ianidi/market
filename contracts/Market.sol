@@ -173,12 +173,13 @@ contract Market is Ownable {
         require(
             markets[_marketID].status == Status.Running ||
                 markets[_marketID].status == Status.Paused,
-            "This market has already been closed"
+            "Market has already been closed"
         );
 
         //TODO: require created + duration > now
         //TODO: query chainlink
-        //TODO: push to winning tokens array
+        //TODO: push to winning tokens array => marketid
+        //send collateral in accordance to markeetid collateral
 
         markets[_marketID].status = Status.Closed;
 
