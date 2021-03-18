@@ -229,7 +229,7 @@ contract Market is Ownable {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
 
-        //deposit collateral
+        //deposit collateral in accordance to markeetid collateral
         //mint both tokens and send to user
         //increase uint256 totalSupply;
         //emit buy event
@@ -238,6 +238,8 @@ contract Market is Ownable {
     function redeem() public // uint256 amount
     {
         //get marketid from token address using winningTokenToMarket
+        // require(markets[_marketID].isExist, "Market doesn't exist");
+        // require(markets[_marketID].status == Status.Running, "Invalid status");
         //send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
         //increase uint256 totalRedemption;
         // emit redeem event
