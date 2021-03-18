@@ -47,7 +47,11 @@ contract Market is Ownable {
     AggregatorV3Interface internal priceFeed;
     IERC20 public collateral;
 
-    constructor() public {}
+    constructor() public {
+        baseCurrencyToChainlinkFeed[
+            uint256(1)
+        ] = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
+    }
 
     //TODO:
     // modifier onlyWhitelisted() {
@@ -108,26 +112,31 @@ contract Market is Ownable {
         address _bullToken
     ) public onlyOwner {
         require(
+            baseCurrencyToChainlinkFeed[_baseCurrencyID] != address(0),
+            "Invalid base currency"
+        );
+        require(
             _duration >= 600 seconds && _duration < 365 days,
             "Invalid duration"
         );
 
-        //TODO: contract factory (ERC20)
-        //TODO: validate _bearToken
-        //TODO: validate _bullToken
+        //TODO: Contract factory for two ERC20 tokens
+        //TODO: validate _bearToken is a valid ERC20 contract
+        //TODO: validate _bullToken is a valid ERC20 contract
 
         int256 _initialPrice;
         address _chainlinkPriceFeed;
         address _collateralToken;
         MarketStruct memory marketStruct;
 
-        //TODO: get chainlink price feed by _baseCurrencyID
-        _chainlinkPriceFeed = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
+        //Get chainlink price feed by _baseCurrencyID
+        _chainlinkPriceFeed = baseCurrencyToChainlinkFeed[_baseCurrencyID];
 
-        //TODO: throw on chainlink error
         _initialPrice = getLatestPrice(
             AggregatorV3Interface(_chainlinkPriceFeed)
         );
+
+        require(_initialPrice > 0, "Chainlink error");
 
         //TODO: accept _collateralToken as function parameter
         _collateralToken = 0xdAC17F958D2ee523a2206206994597C13D831ec7; //USDT
