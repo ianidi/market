@@ -128,7 +128,7 @@ contract Market is Ownable {
         );
 
         //TODO: accept _collateralToken as function parameter
-        address _collateralToken = 0xdac17f958d2ee523a2206206994597c13d831ec7; //USDT
+        address _collateralToken = 0xdAC17F958D2ee523a2206206994597C13D831ec7; //USDT
 
         marketStruct = MarketStruct({
             isExist: true,
