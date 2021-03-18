@@ -30,7 +30,7 @@ contract Market is Ownable {
         int256 finalPrice;
         uint256 created;
         uint256 duration;
-        uint256 totalSupply;
+        uint256 totalDeposit;
         uint256 totalRedemption;
         address collateralToken;
         address bearToken;
@@ -149,7 +149,7 @@ contract Market is Ownable {
                 finalPrice: 0,
                 created: now,
                 duration: _duration,
-                totalSupply: 0,
+                totalDeposit: 0,
                 totalRedemption: 0,
                 collateralToken: _collateralToken,
                 bearToken: _bearToken,
@@ -232,19 +232,30 @@ contract Market is Ownable {
 
         //deposit collateral in accordance to markeetid collateral
         //mint both tokens and send to user
-        //increase uint256 totalSupply;
-        //emit buy event
+
+        //Increase total deposited collateral
+        markets[_marketID].totalDeposit = SafeMath.add(
+            markets[_marketID].totalDeposit,
+            amount
+        );
+
+        emit Buy(_marketID, now);
     }
 
     function redeem(uint256 _marketID, uint256 amount) external {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Closed, "Invalid status");
         require(amount > 0, "Invalid amount");
+        require(
+            markets[_marketID].totalDeposit >
+                markets[_marketID].totalRedemption,
+            "No collateral left"
+        );
 
         //determine winning token address by market id
         //send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
 
-        //Increase total redemed tokens
+        //Increase total redemed collateral
         markets[_marketID].totalRedemption = SafeMath.add(
             markets[_marketID].totalRedemption,
             amount
