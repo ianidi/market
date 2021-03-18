@@ -164,7 +164,7 @@ contract Market is Ownable {
         //Increment current market ID
         currentMarketID++;
 
-        //TODO: create balancer
+        //TODO: create balancer contract
     }
 
     function pause(uint256 _marketID) public onlyOwner {
@@ -191,6 +191,13 @@ contract Market is Ownable {
             markets[_marketID].status == Status.Running ||
                 markets[_marketID].status == Status.Paused,
             "Market has already been closed"
+        );
+        require(
+            SafeMath.add(
+                markets[_marketID].created,
+                markets[_marketID].duration
+            ) > now,
+            "Market closing time hasn't yet arrived"
         );
 
         //TODO: require created + duration > now
