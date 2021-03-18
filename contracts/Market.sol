@@ -99,17 +99,16 @@ contract Market is Ownable {
     //TODO: Whitelist modifier baseCurrency chainlink
     function createMarket(
         uint256 _baseCurrencyID,
-        uint256 duration,
+        uint256 _duration,
         address _bearToken,
         address _bullToken
     ) public onlyOwner {
         //TODO: contract factory (ERC20)
 
-        //TODO: validate duration
+        //TODO: validate _duration
         //TODO: validate _bearToken
         //TODO: validate _bullToken
 
-        uint256 created;
         int256 _initialPrice;
         address _chainlinkPriceFeed;
 
@@ -120,7 +119,6 @@ contract Market is Ownable {
         _initialPrice = getLatestPrice(
             AggregatorV3Interface(_chainlinkPriceFeed)
         );
-        _timestamp = now;
 
         //TODO: accept _collateralToken as function parameter
         address _collateralToken = 0xdac17f958d2ee523a2206206994597c13d831ec7; //USDT
@@ -132,7 +130,7 @@ contract Market is Ownable {
             baseCurrencyID: _baseCurrencyID,
             initialPrice: _initialPrice,
             finalPrice: 0,
-            created: _timestamp,
+            created: now,
             duration: _duration,
             totalSupply: 0,
             totalRedemption: 0,
@@ -143,7 +141,7 @@ contract Market is Ownable {
 
         markets[currentMarketID] = marketStruct;
 
-        emit Created(currentMarketID, _timestamp);
+        emit Created(currentMarketID, now);
 
         //Increment current market ID
         currentMarketID++;
@@ -155,16 +153,18 @@ contract Market is Ownable {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
 
-        stage = Stage.Paused;
-        emit Paused();
+        markets[_marketID].status = Status.Paused;
+
+        emit Paused(_marketID, now);
     }
 
     function resume(uint256 _marketID) public onlyOwner {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Paused, "Invalid status");
 
-        stage = Stage.Running;
-        emit Resumed();
+        markets[_marketID].status = Status.Running;
+
+        emit Resumed(_marketID, now);
     }
 
     function close(uint256 _marketID) public onlyOwner {
@@ -175,8 +175,9 @@ contract Market is Ownable {
             "This market has already been closed"
         );
 
-        stage = Stage.Closed;
-        emit Closed();
+        markets[_marketID].status = Status.Closed;
+
+        emit Closed(_marketID, now);
     }
 
     function transferToMe(
