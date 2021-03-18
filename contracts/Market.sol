@@ -183,13 +183,13 @@ contract Market is Ownable {
         emit Closed(_marketID, now);
     }
 
-    function transferToMe(
-        address _owner,
-        address _token,
-        unit _amount
-    ) public {
-        ERC20(_token).transferFrom(_owner, address(this), _amount);
-    }
+    // function transferToMe(
+    //     address _owner,
+    //     address _token,
+    //     unit _amount
+    // ) public {
+    //     ERC20(_token).transferFrom(_owner, address(this), _amount);
+    // }
 
     //Buy new token pair for collateral token
     function buy(
@@ -197,7 +197,12 @@ contract Market is Ownable {
         address token,
         uint256 amount
     ) public {
+        require(markets[_marketID].isExist, "Market doesn't exist");
+        require(markets[_marketID].status == Status.Running, "Invalid status");
+
+        //deposit collateral
         //mint tokens
+        //emit buy event
     }
 
     function redeem(
@@ -205,27 +210,25 @@ contract Market is Ownable {
         address token,
         uint256 amount
     ) public {
-        pmSystem.safeTransferFrom(
-            address(this),
-            owner(),
-            positionId,
-            pmSystem.balanceOf(address(this), positionId),
-            ""
-        );
-
-        require(
-            collateralToken.transferFrom(
-                msg.sender,
-                address(this),
-                uint256(fundingChange)
-            ) &&
-                collateralToken.approve(
-                    address(pmSystem),
-                    uint256(fundingChange)
-                )
-        );
-
-        require(collateralToken.transfer(owner(), uint256(-fundingChange)));
+        // pmSystem.safeTransferFrom(
+        //     address(this),
+        //     owner(),
+        //     positionId,
+        //     pmSystem.balanceOf(address(this), positionId),
+        //     ""
+        // );
+        // require(
+        //     collateralToken.transferFrom(
+        //         msg.sender,
+        //         address(this),
+        //         uint256(fundingChange)
+        //     ) &&
+        //         collateralToken.approve(
+        //             address(pmSystem),
+        //             uint256(fundingChange)
+        //         )
+        // );
+        // require(collateralToken.transfer(owner(), uint256(-fundingChange)));
     }
 
     //TODO: market info read functions
