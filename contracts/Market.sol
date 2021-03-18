@@ -60,14 +60,18 @@ contract Market is Ownable {
     /**
      * Returns the latest price
      */
-    function getLatestPrice() public view returns (int256) {
+    function getLatestPrice(AggregatorV3Interface feed)
+        public
+        view
+        returns (int256)
+    {
         (
             uint80 roundID,
             int256 price,
             uint256 startedAt,
             uint256 timeStamp,
             uint80 answeredInRound
-        ) = priceFeed.latestRoundData();
+        ) = feed.latestRoundData();
         return price;
     }
 
@@ -82,14 +86,18 @@ contract Market is Ownable {
      *
      * @dev A timestamp with zero value means the round is not complete and should not be used.
      */
-    function getHistoricalPrice(uint80 roundId) public view returns (int256) {
+    function getHistoricalPrice(AggregatorV3Interface feed, uint80 roundId)
+        public
+        view
+        returns (int256)
+    {
         (
             uint80 id,
             int256 price,
             uint256 startedAt,
             uint256 timeStamp,
             uint80 answeredInRound
-        ) = priceFeed.getRoundData(roundId);
+        ) = feed.getRoundData(roundId);
         require(timeStamp > 0, "Round not complete");
         return price;
     }
