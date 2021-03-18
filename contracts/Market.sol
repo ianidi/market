@@ -37,7 +37,8 @@ contract Market is Ownable {
     }
 
     mapping(uint256 => MarketStruct) public markets;
-    mapping(address => uint256) public tokenToMarketList;
+    mapping(address => uint256) public tokenToMarket;
+    mapping(address => uint256) public winningTokenToMarket;
     mapping(uint256 => address) public baseCurrencyToChainlinkFeed;
 
     uint256 public currentMarketID = 0;
@@ -100,15 +101,18 @@ contract Market is Ownable {
     }
 
     //TODO: Whitelist modifier baseCurrency chainlink
-    function createMarket(
+    function create(
         uint256 _baseCurrencyID,
         uint256 _duration,
         address _bearToken,
         address _bullToken
     ) public onlyOwner {
-        //TODO: contract factory (ERC20)
+        require(
+            _duration >= 600 seconds && _duration < 365 days,
+            "Invalid duration"
+        );
 
-        //TODO: validate _duration
+        //TODO: contract factory (ERC20)
         //TODO: validate _bearToken
         //TODO: validate _bullToken
 
@@ -199,9 +203,9 @@ contract Market is Ownable {
     // }
 
     //Buy new token pair for collateral token
-    function buy(uint256 _marketID) public // address token,
-    // uint256 amount
-    {
+    function buy(
+        uint256 _marketID // address token, // uint256 amount
+    ) public {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
 
