@@ -54,12 +54,6 @@ contract Market is Ownable {
         ] = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
     }
 
-    //TODO:
-    // modifier onlyWhitelisted() {
-    //   require(whitelist == Whitelist(0) || whitelist.isWhitelisted(msg.sender), "only whitelisted users may call this function");
-    //   _;
-    // }
-
     /**
      * Returns the latest price
      */
@@ -105,7 +99,6 @@ contract Market is Ownable {
         return price;
     }
 
-    //TODO: Whitelist modifier baseCurrency chainlink
     function create(
         uint256 _baseCurrencyID,
         uint256 _duration,
