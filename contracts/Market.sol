@@ -54,6 +54,7 @@ contract Market is Ownable {
         currentMarketID++;
     }
 
+    //TODO:
     // modifier onlyWhitelisted() {
     //   require(whitelist == Whitelist(0) || whitelist.isWhitelisted(msg.sender), "only whitelisted users may call this function");
     //   _;
@@ -146,7 +147,7 @@ contract Market is Ownable {
         //Increment current market ID
         currentMarketID++;
 
-        //TODO: call balancer
+        //TODO: create balancer
     }
 
     function pause(uint256 _marketID) public onlyOwner {
@@ -175,6 +176,10 @@ contract Market is Ownable {
             "This market has already been closed"
         );
 
+        //TODO: require created + duration > now
+        //TODO: query chainlink
+        //TODO: push to winning tokens array
+
         markets[_marketID].status = Status.Closed;
 
         emit Closed(_marketID, now);
@@ -195,7 +200,6 @@ contract Market is Ownable {
         uint256 amount
     ) public {
         //mint tokens
-        //call balancer
     }
 
     function redeem(
@@ -203,8 +207,6 @@ contract Market is Ownable {
         address token,
         uint256 amount
     ) public {
-        //call balancer
-
         pmSystem.safeTransferFrom(
             address(this),
             owner(),
