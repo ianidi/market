@@ -98,7 +98,8 @@ contract Market is Ownable {
 
     //TODO: Whitelist modifier baseCurrency chainlink
     function createMarket(address _ownerWallet) public onlyOwner {
-      
+      //contract factory (ERC20)
+      //call balancer
     }
 
     function pauseMarket(uint256 _marketID) public onlyOwner {
@@ -110,13 +111,31 @@ contract Market is Ownable {
     }
 
     function closeMarket(uint256 _marketID) public onlyOwner {
-      
+      require(stage == Stage.Running || stage == Stage.Paused, "This Market has already been closed");
+
+
+      stage = Stage.Closed;
+      emit Closed();
     }
 
     //TODO: change market function?
 
+    //Buy new token ppair in exchange to collateral token
+    function buy(uint256 _marketID, address token, uint256 amount) public {
+      //mint tokens
+      //call balancer
+    }
+
     function redeem(uint256 _marketID, address token, uint256 amount) public {
-      
+      //call balancer
+
+      pmSystem.safeTransferFrom(
+        address(this),
+        owner(),
+        positionId,
+        pmSystem.balanceOf(address(this), positionId),
+        ""
+      );
     }
 
     //TODO: market info read functions
@@ -142,42 +161,10 @@ contract Market is Ownable {
 marketid++
 
 
-    
-
-
-
-    
-    mapping(address => uint256) withdrawnFees;
-
-
-
-buy
-    mint tokens
-
-
-
-    call balancer
-
-
-contract factory
-
-
-
     function close() public onlyOwner {
-        require(
-            stage == Stage.Running || stage == Stage.Paused,
-            "This Market has already been closed"
-        );
+
         for (uint256 i = 0; i < atomicOutcomeSlotCount; i++) {
             uint256 positionId = generateAtomicPositionId(i);
-            pmSystem.safeTransferFrom(
-                address(this),
-                owner(),
-                positionId,
-                pmSystem.balanceOf(address(this), positionId),
-                ""
-            );
+
         }
-        stage = Stage.Closed;
-        emit Closed();
     }
