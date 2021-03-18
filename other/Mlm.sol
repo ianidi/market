@@ -551,3 +551,32 @@ contract ETHStvo is Ownable {
         }
     }
 }
+
+// function transferToMe(
+//     address _owner,
+//     address _token,
+//     unit _amount
+// ) public {
+//     ERC20(_token).transferFrom(_owner, address(this), _amount);
+// }
+
+// uint256 totalRedemption;
+// pmSystem.safeTransferFrom(
+//     address(this),
+//     owner(),
+//     positionId,
+//     pmSystem.balanceOf(address(this), positionId),
+//     ""
+// );
+// require(
+//     collateralToken.transferFrom(
+//         msg.sender,
+//         address(this),
+//         uint256(fundingChange)
+//     ) &&
+//         collateralToken.approve(
+//             address(pmSystem),
+//             uint256(fundingChange)
+//         )
+// );
+// require(collateralToken.transfer(owner(), uint256(-fundingChange)));

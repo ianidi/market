@@ -222,24 +222,16 @@ contract Market is Ownable {
         emit Closed(_marketID, now);
     }
 
-    // function transferToMe(
-    //     address _owner,
-    //     address _token,
-    //     unit _amount
-    // ) public {
-    //     ERC20(_token).transferFrom(_owner, address(this), _amount);
-    // }
-
     //Buy new token pair for collateral token
     function buy(
-        uint256 _marketID // address token, // uint256 amount
+        uint256 _marketID // uint256 amount
     ) public {
         require(markets[_marketID].isExist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
 
         //deposit collateral
-        //mint tokens
-        // uint256 totalSupply;
+        //mint both tokens and send to user
+        //increase uint256 totalSupply;
         //emit buy event
     }
 
@@ -248,27 +240,10 @@ contract Market is Ownable {
         address token,
         uint256 amount
     ) public {
-        //send collateral in accordance to markeetid collateral
-        // uint256 totalRedemption;
-        // pmSystem.safeTransferFrom(
-        //     address(this),
-        //     owner(),
-        //     positionId,
-        //     pmSystem.balanceOf(address(this), positionId),
-        //     ""
-        // );
-        // require(
-        //     collateralToken.transferFrom(
-        //         msg.sender,
-        //         address(this),
-        //         uint256(fundingChange)
-        //     ) &&
-        //         collateralToken.approve(
-        //             address(pmSystem),
-        //             uint256(fundingChange)
-        //         )
-        // );
-        // require(collateralToken.transfer(owner(), uint256(-fundingChange)));
+        //get marketid from token address using winningTokenToMarket
+        //send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
+        //increase uint256 totalRedemption;
+        // emit redeem event
     }
 
     //TODO: baseCurrencyToChainlinkFeed edit functions
