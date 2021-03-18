@@ -7,12 +7,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 
 contract Market is Ownable {
-    //TODO: add events
+    //TODO: add more info to events
     event Created(uint256 indexed marketID, uint256 _time);
     event Paused(uint256 indexed marketID, uint256 _time);
     event Resumed(uint256 indexed marketID, uint256 _time);
     event Closed(uint256 indexed marketID, uint256 _time);
-    event Redemption(
+    event Buy(uint256 indexed marketID, uint256 _time);
+    event Redeem(
         uint256 indexed marketID,
         uint256 indexed memberID,
         uint256 _time
