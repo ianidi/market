@@ -48,6 +48,17 @@ contract Market is Ownable {
         currentMarketID++;
     }
 
+    //Market has to be in given stage
+    modifier atStage(Stage _stage) {
+      require(stage == _stage);
+      _;
+    }
+
+    // modifier onlyWhitelisted() {
+    //   require(whitelist == Whitelist(0) || whitelist.isWhitelisted(msg.sender), "only whitelisted users may call this function");
+    //   _;
+    // }
+
     /**
      * Returns the latest price
      */
@@ -85,6 +96,7 @@ contract Market is Ownable {
         return price;
     }
 
+    //TODO: Whitelist modifier baseCurrency chainlink
     function createMarket(address _ownerWallet) public onlyOwner {
       
     }
@@ -108,7 +120,7 @@ contract Market is Ownable {
     }
 
     //TODO: market info read functions
-    function viewMarketIsExist(uint256 _marketID) public view returns (uint256) {
+    function viewMarketIsExist(uint256 _marketID) public view returns (bool) {
       return markets[_marketID].isExist;
     }
 }
@@ -129,23 +141,8 @@ contract Market is Ownable {
 
 marketid++
 
-Whitelist baseCurrency chainlink
 
     
-
-    modifier atStage(Stage _stage) {
-        // Contract has to be in given stage
-        require(stage == _stage);
-        _;
-    }
-
-    modifier onlyWhitelisted() {
-        require(
-            whitelist == Whitelist(0) || whitelist.isWhitelisted(msg.sender),
-            "only whitelisted users may call this function"
-        );
-        _;
-    }
 
 
 
