@@ -109,6 +109,7 @@ contract Market is Ownable {
 
         int256 _initialPrice;
         address _chainlinkPriceFeed;
+        MarketStruct memory marketStruct;
 
         //TODO: get chainlink price feed by _baseCurrencyID
         _chainlinkPriceFeed = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
