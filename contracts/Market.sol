@@ -118,10 +118,10 @@ contract Market is Ownable {
             "Bull token is already assigned to another market"
         );
 
-        //TODO: Contract factory for two ERC20 tokens
+        //TODO: Contract factory (clone) for balancer contract
+        //TODO: Contract factory (clone) for two ERC20 tokens
         //TODO: validate _bearToken is a valid ERC20 contract
         //TODO: validate _bullToken is a valid ERC20 contract
-        //TODO: Contract factory for balancer contract
 
         //Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
@@ -132,7 +132,7 @@ contract Market is Ownable {
 
         require(_initialPrice > 0, "Chainlink error");
 
-        //TODO: accept _collateralToken as function parameter and validate is a valid ERC20 contract
+        //TODO: accept _collateralToken as function parameter and validate it is a valid ERC20 contract
         address _collateralToken = 0xdAC17F958D2ee523a2206206994597C13D831ec7; //USDT
 
         MarketStruct memory marketStruct =
@@ -276,5 +276,3 @@ contract Market is Ownable {
         return markets[_marketID].exist;
     }
 }
-
-//TODO: other market info view functions
