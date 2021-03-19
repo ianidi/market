@@ -13,11 +13,7 @@ contract Market is Ownable {
     event Resumed(uint256 indexed marketID, uint256 _time);
     event Closed(uint256 indexed marketID, uint256 _time);
     event Buy(uint256 indexed marketID, uint256 _time);
-    event Redeem(
-        uint256 indexed marketID,
-        uint256 indexed memberID,
-        uint256 _time
-    );
+    event Redeem(uint256 indexed marketID, uint256 _time);
 
     enum Status {Running, Paused, Closed}
 
