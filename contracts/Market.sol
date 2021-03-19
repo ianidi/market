@@ -127,8 +127,8 @@ contract Market is Ownable {
 
         //Contract factory (clone) for two ERC20 tokens
         //TODO: determine collateral decimals and set to bear / bull tokens
-        address _bearToken = cloneBearToken();
-        address _bullToken = cloneBullToken();
+        address _bearToken = address(cloneBearToken());
+        address _bullToken = address(cloneBullToken());
 
         //Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
@@ -228,7 +228,7 @@ contract Market is Ownable {
         require(_amount > 0, "Invalid amount");
 
         //TODO: deposit collateral in accordance to markeetid collateral. require(token.transferFrom(msg.sender, this, _amount));
-        //TODO: mint both tokens
+        //TODO: mint both tokens. _mint(msg.sender, supply);
         //TODO: approve both tokens
         //TODO: send both tokens to user. require(token.transferFrom(msg.sender, this, _amount));
 
