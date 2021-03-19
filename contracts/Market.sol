@@ -218,9 +218,10 @@ contract Market is Ownable {
         require(markets[_marketID].status == Status.Running, "Invalid status");
         require(_amount > 0, "Invalid amount");
 
-        //TODO: require(token.transferFrom(msg.sender, this, _amount));
-        //TODO: deposit collateral in accordance to markeetid collateral
-        //TODO: mint both tokens and send them to user
+        //TODO: deposit collateral in accordance to markeetid collateral. require(token.transferFrom(msg.sender, this, _amount));
+        //TODO: mint both tokens
+        //TODO: approve both tokens
+        //TODO: send both tokens to user. require(token.transferFrom(msg.sender, this, _amount));
 
         //Increase total deposited collateral
         markets[_marketID].totalDeposit = SafeMath.add(
@@ -250,8 +251,7 @@ contract Market is Ownable {
             winningToken = markets[_marketID].bullToken;
         }
 
-        //TODO: require(token.transferFrom(msg.sender, this, _amount));
-        //TODO: deposit winningToken _amount
+        //TODO: deposit winningToken _amount. require(token.transferFrom(msg.sender, this, _amount));
         //TODO: send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
 
         //Increase total redemed collateral
