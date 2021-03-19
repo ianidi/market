@@ -5,6 +5,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
+import "./BearToken.sol";
+import "./BullToken.sol";
 
 contract Market is Ownable {
     //TODO: add more info to events
@@ -14,6 +16,8 @@ contract Market is Ownable {
     event Closed(uint256 indexed marketID, uint256 _time);
     event Buy(uint256 indexed marketID, uint256 _time);
     event Redeem(uint256 indexed marketID, uint256 _time);
+    event NewBearToken(address indexed contractAddress, uint256 _time);
+    event NewBullToken(address indexed contractAddress, uint256 _time);
 
     enum Status {Running, Paused, Closed}
 
@@ -34,7 +38,7 @@ contract Market is Ownable {
     }
 
     mapping(uint256 => MarketStruct) public markets;
-    mapping(address => uint256) public tokenToMarket;
+    // mapping(address => uint256) public tokenToMarket;
     mapping(uint256 => address) public baseCurrencyToChainlinkFeed;
 
     uint256 public currentMarketID = 1;
@@ -93,12 +97,23 @@ contract Market is Ownable {
         return price;
     }
 
-    function create(
-        uint256 _baseCurrencyID,
-        uint256 _duration,
-        address _bearToken,
-        address _bullToken
-    ) public onlyOwner {
+    function cloneBearToken() internal onlyOwner returns (BearToken) {
+        BearToken bearToken = new BearToken();
+        emit NewBearToken(address(bearToken), now);
+        // bearToken.setController(msg.sender);
+        return bearToken;
+    }
+
+    function cloneBullToken() internal onlyOwner returns (BullToken) {
+        BullToken bullToken = new BullToken();
+        emit NewBullToken(address(bullToken), now);
+        return bullToken;
+    }
+
+    function create(uint256 _baseCurrencyID, uint256 _duration)
+        public
+        onlyOwner
+    {
         require(
             baseCurrencyToChainlinkFeed[_baseCurrencyID] != address(0),
             "Invalid base currency"
@@ -107,19 +122,13 @@ contract Market is Ownable {
             _duration >= 600 seconds && _duration < 365 days,
             "Invalid duration"
         );
-        require(
-            tokenToMarket[_bearToken] == 0,
-            "Bear token is already assigned to another market"
-        );
-        require(
-            tokenToMarket[_bullToken] == 0,
-            "Bull token is already assigned to another market"
-        );
 
         //TODO: Contract factory (clone) for balancer contract
-        //TODO: Contract factory (clone) for two ERC20 tokens
-        //TODO: validate _bearToken is a valid ERC20 contract
-        //TODO: validate _bullToken is a valid ERC20 contract
+
+        //Contract factory (clone) for two ERC20 tokens
+        //TODO: determine collateral decimals and set to bear / bull tokens
+        address _bearToken = cloneBearToken();
+        address _bullToken = cloneBullToken();
 
         //Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
@@ -153,8 +162,8 @@ contract Market is Ownable {
         markets[currentMarketID] = marketStruct;
 
         //Assign bear and bull tokens to newly created market
-        tokenToMarket[_bearToken] = currentMarketID;
-        tokenToMarket[_bullToken] = currentMarketID;
+        // tokenToMarket[_bearToken] = currentMarketID;
+        // tokenToMarket[_bullToken] = currentMarketID;
 
         emit Created(currentMarketID, now);
 
