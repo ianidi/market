@@ -37,14 +37,12 @@ contract Market is Ownable {
     mapping(address => uint256) public tokenToMarket;
     mapping(uint256 => address) public baseCurrencyToChainlinkFeed;
 
-    uint256 public currentMarketID = 0;
-    address public manager;
+    uint256 public currentMarketID = 1;
 
     AggregatorV3Interface internal priceFeed;
     IERC20 public collateral;
 
     constructor() public {
-        currentMarketID = uint256(1);
         baseCurrencyToChainlinkFeed[
             uint256(1)
         ] = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
