@@ -219,14 +219,14 @@ contract Market is Ownable {
     }
 
     //Buy new token pair for collateral token
-    function buy(uint256 _marketID, uint256 amount) external {
+    function buy(uint256 _marketID, uint256 _amount) external {
         require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
-        require(amount > 0, "Invalid amount");
+        require(_amount > 0, "Invalid amount");
 
-        //require(token.transferFrom(msg.sender, this, amount));
-        //deposit collateral in accordance to markeetid collateral
-        //mint both tokens and send them to user
+        //TODO: require(token.transferFrom(msg.sender, this, _amount));
+        //TODO: deposit collateral in accordance to markeetid collateral
+        //TODO: mint both tokens and send them to user
 
         //Increase total deposited collateral
         markets[_marketID].totalDeposit = SafeMath.add(
@@ -237,18 +237,28 @@ contract Market is Ownable {
         emit Buy(_marketID, now);
     }
 
-    function redeem(uint256 _marketID, uint256 amount) external {
+    function redeem(uint256 _marketID, uint256 _amount) external {
         require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Closed, "Invalid status");
-        require(amount > 0, "Invalid amount");
+        require(_amount > 0, "Invalid amount");
         require(
             markets[_marketID].totalDeposit >
                 markets[_marketID].totalRedemption,
             "No collateral left"
         );
 
-        //determine winning token address by market id
-        //send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
+        //Determine winning token address
+        address winningToken;
+
+        if (markets[_marketID].finalPrice > markets[_marketID].initialPrice) {
+            winningToken = markets[_marketID].bearToken;
+        } else {
+            winningToken = markets[_marketID].bullToken;
+        }
+
+        //TODO: require(token.transferFrom(msg.sender, this, _amount));
+        //TODO: deposit winningToken _amount
+        //TODO: send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
 
         //Increase total redemed collateral
         markets[_marketID].totalRedemption = SafeMath.add(
