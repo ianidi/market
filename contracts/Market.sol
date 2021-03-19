@@ -38,7 +38,6 @@ contract Market is Ownable {
     }
 
     mapping(uint256 => MarketStruct) public markets;
-    // mapping(address => uint256) public tokenToMarket;
     mapping(uint256 => address) public baseCurrencyToChainlinkFeed;
 
     uint256 public currentMarketID = 1;
@@ -123,12 +122,12 @@ contract Market is Ownable {
             "Invalid duration"
         );
 
-        //TODO: Contract factory (clone) for balancer contract
-
         //Contract factory (clone) for two ERC20 tokens
         //TODO: determine collateral decimals and set to bear / bull tokens
         address _bearToken = address(cloneBearToken());
         address _bullToken = address(cloneBullToken());
+
+        //TODO: Call balancer contract
 
         //Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
@@ -160,10 +159,6 @@ contract Market is Ownable {
             });
 
         markets[currentMarketID] = marketStruct;
-
-        //Assign bear and bull tokens to newly created market
-        // tokenToMarket[_bearToken] = currentMarketID;
-        // tokenToMarket[_bullToken] = currentMarketID;
 
         emit Created(currentMarketID, now);
 
