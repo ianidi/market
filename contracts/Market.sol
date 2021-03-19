@@ -199,14 +199,14 @@ contract Market is Ownable {
 
         //Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
-            baseCurrencyToChainlinkFeed[_baseCurrencyID];
+            baseCurrencyToChainlinkFeed[markets[_marketID].baseCurrencyID];
 
         //TODO: query chainlink by valid timestamp
         int256 _finalPrice =
             getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
 
-        require(_initialPrice > 0, "Chainlink error");
-        require(markets[_marketID].initialPrice != _finalPrice, "Price error");
+        require(_finalPrice > 0, "Chainlink error");
+        //TODO: require(markets[_marketID].initialPrice != _finalPrice, "Price didn't change");
 
         markets[_marketID].status = Status.Closed;
         markets[_marketID].finalPrice = _finalPrice;
@@ -227,7 +227,7 @@ contract Market is Ownable {
         //Increase total deposited collateral
         markets[_marketID].totalDeposit = SafeMath.add(
             markets[_marketID].totalDeposit,
-            amount
+            _amount
         );
 
         emit Buy(_marketID, now);
@@ -259,7 +259,7 @@ contract Market is Ownable {
         //Increase total redemed collateral
         markets[_marketID].totalRedemption = SafeMath.add(
             markets[_marketID].totalRedemption,
-            amount
+            _amount
         );
 
         emit Redeem(_marketID, now);
