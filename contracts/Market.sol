@@ -259,10 +259,16 @@ contract Market is Ownable {
         emit Redeem(_marketID, now);
     }
 
-    //TODO: baseCurrencyToChainlinkFeed edit functions
+    function setBaseCurrencyToChainlinkFeed(
+        uint256 _baseCurrencyID,
+        address _chainlinkFeed
+    ) public onlyOwner {
+        baseCurrencyToChainlinkFeed[_baseCurrencyID] = _chainlinkFeed;
+    }
 
-    //TODO: market info read functions
     function viewMarketExist(uint256 _marketID) public view returns (bool) {
         return markets[_marketID].exist;
     }
 }
+
+//TODO: other market info view functions
