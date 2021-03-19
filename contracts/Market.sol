@@ -122,6 +122,9 @@ contract Market is Ownable {
             "Invalid duration"
         );
 
+        //TODO: accept _collateralToken as function parameter and check it is a valid ERC20 contract
+        address _collateralToken = 0xdAC17F958D2ee523a2206206994597C13D831ec7; //USDT
+
         //Contract factory (clone) for two ERC20 tokens
         //TODO: determine collateral decimals and set to bear / bull tokens
         address _bearToken = address(cloneBearToken());
@@ -137,9 +140,6 @@ contract Market is Ownable {
             getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
 
         require(_initialPrice > 0, "Chainlink error");
-
-        //TODO: accept _collateralToken as function parameter and validate it is a valid ERC20 contract
-        address _collateralToken = 0xdAC17F958D2ee523a2206206994597C13D831ec7; //USDT
 
         MarketStruct memory marketStruct =
             MarketStruct({
