@@ -288,13 +288,9 @@ contract Market is BPool, Ownable {
         //Deposit collateral
         markets[_marketID].collateralToken.transferFrom(msg.sender, this, _amount);
 
-        //Mint both tokens
-        markets[_marketID].bearToken.mint(msg.sender, _amountDiv);
-        markets[_marketID].bullToken.mint(msg.sender, _amountDiv);
-
-        //Approve both tokens
-        require(markets[_marketID].bearToken.transferFrom(msg.sender, this, _amountDiv));
-        require(markets[_marketID].bullToken.transferFrom(msg.sender, this, _amountDiv));
+        //Mint both tokens for user
+        require(markets[_marketID].bearToken.mint(msg.sender, _amountDiv));
+        require(markets[_marketID].bullToken.mint(msg.sender, _amountDiv));
 
         //Increase total deposited collateral
         markets[_marketID].totalDeposit = SafeMath.add(
@@ -310,7 +306,7 @@ contract Market is BPool, Ownable {
         require(markets[_marketID].status == Status.Closed, "Invalid status");
         require(_amount > 0, "Invalid amount");
         require(
-            markets[_marketID].totalDeposit >
+            markets[_marketID].totalDeposit >=
                 markets[_marketID].totalRedemption,
             "No collateral left"
         );
@@ -325,7 +321,9 @@ contract Market is BPool, Ownable {
         }
 
         //Deposit winningToken
-        require(markets[_marketID].bullToken.transferFrom(msg.sender, this, _amount));
+        require(winningToken.transferFrom(msg.sender, this, _amount));
+
+        //TODO: Burn winningToken
 
         //Send collateral to user
         require(markets[_marketID].collateralToken.transferFrom(this, msg.sender, _amount));
