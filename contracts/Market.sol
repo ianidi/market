@@ -7,8 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 import "./balancer/BPool.sol";
 import "./balancer/BFactory.sol";
-import "./BearToken.sol";
-import "./BullToken.sol";
+import "./ConditionalToken.sol";
 
 contract Market is BPool, Ownable {
     //TODO: add more info to events
@@ -34,6 +33,7 @@ contract Market is BPool, Ownable {
         uint256 duration;
         uint256 totalDeposit;
         uint256 totalRedemption;
+        uint256 collateralDecimals;
         address collateralToken;
         address bearToken;
         address bullToken;
@@ -56,7 +56,7 @@ contract Market is BPool, Ownable {
 
     constructor() public {
         BFactory factory = BFactory(_factory);
-        
+
         baseCurrencyToChainlinkFeed[
             uint256(1)
         ] = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
@@ -108,13 +108,13 @@ contract Market is BPool, Ownable {
     }
 
     function cloneBearToken() internal onlyOwner returns (BearToken) {
-        BearToken bearToken = new BearToken();
+        ConditionalToken bearToken = new ConditionalToken("Bear", "Bear");
         emit NewBearToken(address(bearToken), now);
         return bearToken;
     }
 
     function cloneBullToken() internal onlyOwner returns (BullToken) {
-        BullToken bullToken = new BullToken();
+        ConditionalToken bullToken = new ConditionalToken("Bull", "Bull");
         emit NewBullToken(address(bullToken), now);
         return bullToken;
     }
@@ -138,7 +138,11 @@ contract Market is BPool, Ownable {
         addToken(_pool, _collateralToken, _collateralBalance, COLLATERAL_TOKEN_WEIGHT);
     }
 
-    function create(uint256 _baseCurrencyID, uint256 _duration, address _collateralToken)
+    function calcSwapFee(uint8 _decimals) public returns (uint8) {
+        return (10 ** _decimals).div(1000).mul(3); // 0.3%
+    }
+
+    function create(uint256 _baseCurrencyID, uint256 _duration, address _collateralToken, uint256 _approvedBalance)
         public
         onlyOwner
     {
@@ -155,10 +159,9 @@ contract Market is BPool, Ownable {
             "Invalid duration"
         );
 
-        //Contract factory (clone) for two ERC20 tokens
+        //Create two ERC20 tokens
         address _bearToken = address(cloneBearToken());
         address _bullToken = address(cloneBullToken());
-        uint8 _collateralDecimals = IERC20(_collateralToken).decimals();
 
         //Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
@@ -168,6 +171,28 @@ contract Market is BPool, Ownable {
             getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
 
         require(_initialPrice > 0, "Chainlink error");
+
+        uint8 _collateralDecimals = IERC20(_collateralToken).decimals();
+
+        //Create balancer pool
+        BPool _pool = factory.newBPool();
+
+        //Estamate balance tokens
+        uint256 _initialBalance = _approvedBalance.div(2);
+
+        //Calculate swap fee
+        uint256 _swapFee = calcSwapFee(_collateralDecimals);
+
+        //Add conditional and collateral tokens to the pool
+        addConditionalToken(_pool, _bearToken, _initialBalance);
+        addConditionalToken(_pool, _bullToken, _initialBalance);
+        addCollateralToken(_pool, IERC20(_collateralToken), _initialBalance);
+
+        //Set the swap fee
+        _pool.setSwapFee(_swapFee);
+
+        //Release the pool and allow public swaps
+        _pool.release();
 
         MarketStruct memory marketStruct =
             MarketStruct({
@@ -181,24 +206,13 @@ contract Market is BPool, Ownable {
                 duration: _duration,
                 totalDeposit: 0,
                 totalRedemption: 0,
+                collateralDecimals: _collateralDecimals,
                 collateralToken: _collateralToken,
                 bearToken: _bearToken,
                 bullToken: _bullToken
             });
 
         markets[currentMarketID] = marketStruct;
-
-
-        //Estamate balance tokens
-        uint256 _initialBalance = _approvedBalance.div(2);
-
-        //Calculate swap fee
-        uint256 _swapFee = calcSwapFee(_collateralDecimals);
-
-        //Add conditional and collateral tokens to the pool
-        addConditionalToken(_pool, _bearToken, _initialBalance);
-        addConditionalToken(_pool, _bullToken, _initialBalance);
-        addCollateralToken(_pool, IERC20(_collateralToken), _initialBalance);
 
         emit Created(currentMarketID, now);
 
