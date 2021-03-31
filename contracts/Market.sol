@@ -35,8 +35,8 @@ contract Market is BPool, Ownable {
         uint256 totalRedemption;
         uint256 collateralDecimals;
         address collateralToken;
-        address bearToken;
-        address bullToken;
+        ConditionalToken bearToken;
+        ConditionalToken bullToken;
         BPool pool;
     }
 
@@ -167,8 +167,8 @@ contract Market is BPool, Ownable {
         );
 
         //Create two ERC20 tokens
-        address _bearToken = address(cloneBearToken());
-        address _bullToken = address(cloneBullToken());
+        ConditionalToken _bearToken = cloneBearToken();
+        ConditionalToken _bullToken = cloneBullToken();
 
         //Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
@@ -283,10 +283,18 @@ contract Market is BPool, Ownable {
         require(markets[_marketID].status == Status.Running, "Invalid status");
         require(_amount > 0, "Invalid amount");
 
-        //TODO: deposit collateral in accordance to markeetid collateral. require(token.transferFrom(msg.sender, this, _amount));
-        //TODO: mint both tokens. _mint(msg.sender, supply);
-        //TODO: approve both tokens
-        //TODO: send both tokens to user. require(token.transferFrom(msg.sender, this, _amount));
+        uint256 _amountDiv = _amount.div(2);
+
+        //Deposit collateral
+        markets[_marketID].collateralToken.transferFrom(msg.sender, this, _amount);
+
+        //Mint both tokens
+        markets[_marketID].bearToken.mint(msg.sender, _amountDiv);
+        markets[_marketID].bullToken.mint(msg.sender, _amountDiv);
+
+        //Approve both tokens
+        require(markets[_marketID].bearToken.transferFrom(msg.sender, this, _amountDiv));
+        require(markets[_marketID].bullToken.transferFrom(msg.sender, this, _amountDiv));
 
         //Increase total deposited collateral
         markets[_marketID].totalDeposit = SafeMath.add(
