@@ -316,7 +316,7 @@ contract Market is BPool, Ownable {
         );
 
         //Determine winning token address
-        address winningToken;
+        ConditionalToken winningToken;
 
         if (markets[_marketID].finalPrice > markets[_marketID].initialPrice) {
             winningToken = markets[_marketID].bearToken;
@@ -324,8 +324,11 @@ contract Market is BPool, Ownable {
             winningToken = markets[_marketID].bullToken;
         }
 
-        //TODO: deposit winningToken _amount. require(token.transferFrom(msg.sender, this, _amount));
-        //TODO: send collateral to user in accordance to markeetid collateral. 1 token = 1 collateral
+        //Deposit winningToken
+        require(markets[_marketID].bullToken.transferFrom(msg.sender, this, _amount));
+
+        //Send collateral to user
+        require(markets[_marketID].collateralToken.transferFrom(this, msg.sender, _amount));
 
         //Increase total redemed collateral
         markets[_marketID].totalRedemption = SafeMath.add(
