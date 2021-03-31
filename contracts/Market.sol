@@ -119,6 +119,10 @@ contract Market is BPool, Ownable {
         return bullToken;
     }
 
+    function calcSwapFee(uint8 _decimals) public returns (uint8) {
+        return (10 ** _decimals).div(1000).mul(3); // 0.3%
+    }
+
     function addConditionalToken(BPool _pool, ConditionalToken _conditionalToken, uint256 _conditionalBalance)
         internal
     {
@@ -132,14 +136,19 @@ contract Market is BPool, Ownable {
         internal
     {
         //Pull collateral tokens from sender
-        //TODO: try to make the transfer to the pool directly
         _collateralToken.transferFrom(msg.sender, address(this), _collateralBalance);
 
         addToken(_pool, _collateralToken, _collateralBalance, COLLATERAL_TOKEN_WEIGHT);
     }
 
-    function calcSwapFee(uint8 _decimals) public returns (uint8) {
-        return (10 ** _decimals).div(1000).mul(3); // 0.3%
+    function addToken(BPool _pool, IERC20 token, uint256 balance, uint256 denorm)
+        internal
+    {
+        //Approve pool
+        token.approve(address(_pool), balance);
+
+        //Add token to the pool
+        _pool.bind(address(token), balance, denorm);
     }
 
     function create(uint256 _baseCurrencyID, uint256 _duration, address _collateralToken, uint256 _approvedBalance)
