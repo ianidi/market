@@ -27,6 +27,7 @@ contract Market is BPool, Ownable {
         Status status;
         uint256 marketID;
         uint256 baseCurrencyID;
+        uint80 initialRoundID;
         int256 initialPrice;
         int256 finalPrice;
         uint256 created;
@@ -66,7 +67,7 @@ contract Market is BPool, Ownable {
     function getLatestPrice(AggregatorV3Interface feed)
         public
         view
-        returns (int256)
+        returns (uint80, int256)
     {
         (
             uint80 roundID,
@@ -75,7 +76,7 @@ contract Market is BPool, Ownable {
             uint256 timeStamp,
             uint80 answeredInRound
         ) = feed.latestRoundData();
-        return price;
+        return (roundID, price);
     }
 
     /**
@@ -174,8 +175,13 @@ contract Market is BPool, Ownable {
         address _chainlinkPriceFeed =
             baseCurrencyToChainlinkFeed[_baseCurrencyID];
 
-        int256 _initialPrice =
-            getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
+        (
+            uint80 roundID,
+            int256 price,
+        ) = getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
+
+        uint80 _initialRoundID = roundID;
+        int256 _initialPrice = price;
 
         require(_initialPrice > 0, "Chainlink error");
 
@@ -207,6 +213,7 @@ contract Market is BPool, Ownable {
                 status: Status.Running,
                 marketID: currentMarketID,
                 baseCurrencyID: _baseCurrencyID,
+                initialRoundID: _initialRoundID,
                 initialPrice: _initialPrice,
                 finalPrice: 0,
                 created: now,
@@ -264,12 +271,18 @@ contract Market is BPool, Ownable {
         address _chainlinkPriceFeed =
             baseCurrencyToChainlinkFeed[markets[_marketID].baseCurrencyID];
 
-        //TODO: query chainlink by valid timestamp
-        int256 _finalPrice =
-            getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
+        //Query chainlink
+        (
+            uint80 roundID,
+            int256 price,
+        ) = getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
+
+        uint80 _lastRoundID = roundID;
+        int256 _finalPrice = price;
 
         require(_finalPrice > 0, "Chainlink error");
-        //TODO: require(markets[_marketID].initialPrice != _finalPrice, "Price didn't change");
+        require(markets[_marketID].initialRoundID != _finalPrice, "Chainlink round ID didn't change");
+        require(markets[_marketID].initialPrice != _finalPrice, "Price didn't change");
 
         markets[_marketID].status = Status.Closed;
         markets[_marketID].finalPrice = _finalPrice;
