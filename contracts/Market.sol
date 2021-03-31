@@ -44,18 +44,16 @@ contract Market is BPool, Ownable {
     mapping(uint256 => address) public baseCurrencyToChainlinkFeed;
     mapping(address => bool) public collateralList;
 
-    uint256 public currentMarketID = 1;
+    AggregatorV3Interface internal priceFeed;
+    IERC20 public collateral;
     BFactory private factory;
 
-    //Constants
+    uint256 public currentMarketID = 1;
     uint256 public constant CONDITIONAL_TOKEN_WEIGHT = 10.mul(BPool.BONE);
     uint256 public constant COLLATERAL_TOKEN_WEIGHT  = CONDITIONAL_TOKEN_WEIGHT.mul(2);
 
-    AggregatorV3Interface internal priceFeed;
-    IERC20 public collateral;
-
     constructor() public {
-        BFactory factory = BFactory(_factory);
+        factory = new BFactory();
 
         baseCurrencyToChainlinkFeed[
             uint256(1)
@@ -107,13 +105,13 @@ contract Market is BPool, Ownable {
         return price;
     }
 
-    function cloneBearToken() internal onlyOwner returns (BearToken) {
+    function cloneBearToken() internal onlyOwner returns (ConditionalToken) {
         ConditionalToken bearToken = new ConditionalToken("Bear", "Bear");
         emit NewBearToken(address(bearToken), now);
         return bearToken;
     }
 
-    function cloneBullToken() internal onlyOwner returns (BullToken) {
+    function cloneBullToken() internal onlyOwner returns (ConditionalToken) {
         ConditionalToken bullToken = new ConditionalToken("Bull", "Bull");
         emit NewBullToken(address(bullToken), now);
         return bullToken;
