@@ -9,7 +9,7 @@ import "./balancer/BPool.sol";
 import "./balancer/BFactory.sol";
 import "./ConditionalToken.sol";
 
-contract Market is BPool, Ownable {
+contract Market is Ownable {
     //TODO: add more info to events
     event Created(uint256 indexed marketID, uint256 _time);
     event Paused(uint256 indexed marketID, uint256 _time);
