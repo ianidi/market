@@ -281,7 +281,7 @@ contract Market is BPool, Ownable {
         int256 _finalPrice = price;
 
         require(_finalPrice > 0, "Chainlink error");
-        require(markets[_marketID].initialRoundID != _finalPrice, "Chainlink round ID didn't change");
+        require(markets[_marketID].initialRoundID != _lastRoundID, "Chainlink round ID didn't change");
         require(markets[_marketID].initialPrice != _finalPrice, "Price didn't change");
 
         markets[_marketID].status = Status.Closed;
