@@ -223,7 +223,8 @@ contract Market is BPool, Ownable {
                 collateralDecimals: _collateralDecimals,
                 collateralToken: _collateralToken,
                 bearToken: _bearToken,
-                bullToken: _bullToken
+                bullToken: _bullToken,
+                pool: _pool
             });
 
         markets[currentMarketID] = marketStruct;
