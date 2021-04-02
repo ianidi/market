@@ -3,20 +3,11 @@
 pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ConditionalToken is ERC20, Ownable {
-    uint8 private _decimals;
-
-    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) public {}
-
-    function cloneConstructor(uint8 decimals_) public {
-        _decimals = decimals_;
-    }
-
-    function decimals() public view override returns (uint8) {
-        return _decimals;
-    }
+contract ConditionalToken is ERC20, ERC20Detailed, Ownable {
+    constructor(string memory _name, string memory _symbol, uint8 _decimals) ERC20Detailed(_name, _symbol, _decimals) public {}
 
     function mint(address account, uint256 amount)
         public

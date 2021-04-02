@@ -16,8 +16,7 @@ contract Market is Ownable {
     event Closed(uint indexed marketID, uint _time);
     event Buy(uint indexed marketID, uint _time);
     event Redeem(uint indexed marketID, uint _time);
-    event NewBearToken(address indexed contractAddress, uint _time);
-    event NewBullToken(address indexed contractAddress, uint _time);
+    event NewToken(address indexed contractAddress, uint _time);
 
     enum Status {Running, Paused, Closed}
 
@@ -104,16 +103,10 @@ contract Market is Ownable {
         return price;
     }
 
-    function cloneBearToken() internal onlyOwner returns (ConditionalToken) {
-        ConditionalToken bearToken = new ConditionalToken("Bear", "Bear");
-        emit NewBearToken(address(bearToken), now);
-        return bearToken;
-    }
-
-    function cloneBullToken() internal onlyOwner returns (ConditionalToken) {
-        ConditionalToken bullToken = new ConditionalToken("Bull", "Bull");
-        emit NewBullToken(address(bullToken), now);
-        return bullToken;
+    function cloneToken(string memory _name, string memory _symbol, uint8 _decimals) internal onlyOwner returns (ConditionalToken) {
+        ConditionalToken token = new ConditionalToken(_name, _symbol, _decimals);
+        emit NewToken(address(token), now);
+        return token;
     }
 
     function calcSwapFee(uint8 _decimals) public returns (uint) {
@@ -141,8 +134,8 @@ contract Market is Ownable {
 
         //Create two ERC20 tokens
         //TODO: title, decimals
-        ConditionalToken _bearToken = cloneBearToken();
-        ConditionalToken _bullToken = cloneBullToken();
+        ConditionalToken _bearToken = cloneToken("Bear", "Bear", _collateralDecimals);
+        ConditionalToken _bullToken = cloneToken("Bull", "Bull", _collateralDecimals);
 
         //Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
