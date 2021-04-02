@@ -33,7 +33,6 @@ contract Market is Ownable {
         uint duration;
         uint totalDeposit;
         uint totalRedemption;
-        uint collateralDecimals;
         address collateralToken;
         address bearToken;
         address bullToken;
