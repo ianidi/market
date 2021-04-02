@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
-import "./balancer/BPool.sol";
+import "./balancer/BConst.sol";
 import "./balancer/PoolManager.sol";
 import "./ConditionalToken.sol";
 
@@ -50,7 +50,7 @@ contract Market is Ownable {
     address public poolManager;
 
     uint public currentMarketID = 1;
-    uint public constant CONDITIONAL_TOKEN_WEIGHT = SafeMath.mul(BPool.BONE, uint(10));
+    uint public constant CONDITIONAL_TOKEN_WEIGHT = SafeMath.mul(BConst.BONE, uint(10));
     uint public constant COLLATERAL_TOKEN_WEIGHT  = SafeMath.mul(CONDITIONAL_TOKEN_WEIGHT, uint(2));
 
     constructor(address _poolManager) public {
