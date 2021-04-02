@@ -4,11 +4,11 @@ pragma solidity ^0.6.0;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
+import "@chainlink/contracts/src/v0.6/ChainlinkClient.sol";
 import "./balancer/PoolManager.sol";
 import "./ConditionalToken.sol";
 
-contract Market is Ownable {
+contract Market is Ownable, ChainlinkClient {
     //TODO: add more info to events
     event Created(uint indexed marketID, uint _time);
     event Paused(uint indexed marketID, uint _time);
@@ -25,7 +25,6 @@ contract Market is Ownable {
         Status status;
         uint marketID;
         uint baseCurrencyID;
-        uint80 initialRoundID;
         int256 initialPrice;
         int256 finalPrice;
         uint created;
@@ -43,9 +42,11 @@ contract Market is Ownable {
     mapping(address => bool) public collateralList;
     mapping(address => uint8) public collateralDecimalsList;
 
-    AggregatorV3Interface internal priceFeed;
-
     PoolManager public poolManager;
+
+    address private oracle;
+    bytes32 private jobId;
+    uint256 private fee;
 
     uint public currentMarketID = 1;
     uint public CONDITIONAL_TOKEN_WEIGHT;
@@ -56,51 +57,38 @@ contract Market is Ownable {
         COLLATERAL_TOKEN_WEIGHT  = SafeMath.mul(CONDITIONAL_TOKEN_WEIGHT, uint(2));
 
         poolManager = PoolManager(_poolManager);
+
+        setPublicChainlinkToken();
+        oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
+        jobId = "29fa9aa13bf1468788b7cc4a500a45b8";
+        fee = 0.1 * 10 ** 18; // 0.1 LINK
     }
 
     /**
-     * Returns the latest price
+     * Create a Chainlink request to retrieve API response, find the target
+     * data, then multiply by 1000000000000000000 (to remove decimal places from data).
      */
-    function getLatestPrice(AggregatorV3Interface feed)
-        public
-        view
-        returns (uint80, int256)
+    function requestVolumeData() public returns (bytes32 requestId) 
     {
-        (
-            uint80 roundID,
-            int256 price,
-            uint startedAt,
-            uint timeStamp,
-            uint80 answeredInRound
-        ) = feed.latestRoundData();
-        return (roundID, price);
+        Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
+        
+        request.add("get", "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD");
+        request.add("path", "USD");
+        
+        // Multiply the result by 1000000000000000000 to remove decimals
+        // int timesAmount = 10**18;
+        // request.addInt("times", timesAmount);
+        
+        // Sends the request
+        return sendChainlinkRequestTo(oracle, request, fee);
     }
-
+    
     /**
-     * Returns historical price for a round id.
-     * roundId is NOT incremental. Not all roundIds are valid.
-     * You must know a valid roundId before consuming historical data.
-     *
-     * ROUNDID VALUES:
-     *    InValid:      18446744073709562300
-     *    Valid:        18446744073709562301
-     *
-     * @dev A timestamp with zero value means the round is not complete and should not be used.
-     */
-    function getHistoricalPrice(AggregatorV3Interface feed, uint80 roundId)
-        public
-        view
-        returns (int256)
+     * Receive the response in the form of uint256
+     */ 
+    function fulfill(bytes32 _requestId, uint256 _volume) public recordChainlinkFulfillment(_requestId)
     {
-        (
-            uint80 id,
-            int256 price,
-            uint startedAt,
-            uint timeStamp,
-            uint80 answeredInRound
-        ) = feed.getRoundData(roundId);
-        require(timeStamp > 0, "Round not complete");
-        return price;
+        volume = _volume;
     }
 
     function cloneToken(string memory _name, string memory _symbol, uint8 _decimals) internal onlyOwner returns (ConditionalToken) {
@@ -110,7 +98,7 @@ contract Market is Ownable {
     }
 
     function calcSwapFee(uint8 _decimals) public returns (uint) {
-        return SafeMath.mul(uint(3), SafeMath.div((10 ** _decimals), uint(1000))); // 0.3%
+        return SafeMath.mul(uint(3), SafeMath.div((uint(10) ** uint(_decimals)), uint(1000))); // 0.3%
     }
 
     function create(uint _baseCurrencyID, uint _duration, address _collateralToken, uint _collateralAmount)
@@ -133,20 +121,13 @@ contract Market is Ownable {
         uint8 _collateralDecimals = collateralDecimalsList[_collateralToken];
 
         //Create two ERC20 tokens
-        //TODO: title, decimals
         ConditionalToken _bearToken = cloneToken("Bear", "Bear", _collateralDecimals);
         ConditionalToken _bullToken = cloneToken("Bull", "Bull", _collateralDecimals);
 
-        //Get chainlink price feed by _baseCurrencyID
+        //TODO: Get chainlink price feed by _baseCurrencyID
         address _chainlinkPriceFeed =
             baseCurrencyToChainlinkFeed[_baseCurrencyID];
 
-        (
-            uint80 roundID,
-            int256 price,
-        ) = getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
-
-        uint80 _initialRoundID = roundID;
         int256 _initialPrice = price;
 
         require(_initialPrice > 0, "Chainlink error");
@@ -191,7 +172,6 @@ contract Market is Ownable {
                 status: Status.Running,
                 marketID: currentMarketID,
                 baseCurrencyID: _baseCurrencyID,
-                initialRoundID: _initialRoundID,
                 initialPrice: _initialPrice,
                 finalPrice: 0,
                 created: now,
@@ -249,17 +229,11 @@ contract Market is Ownable {
         address _chainlinkPriceFeed =
             baseCurrencyToChainlinkFeed[markets[_marketID].baseCurrencyID];
 
-        //Query chainlink
-        (
-            uint80 roundID,
-            int256 price,
-        ) = getLatestPrice(AggregatorV3Interface(_chainlinkPriceFeed));
+        //TODO: Query chainlink
 
-        uint80 _lastRoundID = roundID;
         int256 _finalPrice = price;
 
         require(_finalPrice > 0, "Chainlink error");
-        require(markets[_marketID].initialRoundID != _lastRoundID, "Chainlink round ID didn't change");
         require(markets[_marketID].initialPrice != _finalPrice, "Price didn't change");
 
         markets[_marketID].status = Status.Closed;
@@ -315,6 +289,8 @@ contract Market is Ownable {
         } else {
             winningTokenAddress = markets[_marketID].bullToken;
         }
+
+        //TODO: Price didn't change
 
         //Deposit winningToken
         ConditionalToken winningToken = ConditionalToken(winningTokenAddress);
