@@ -289,8 +289,8 @@ contract Market is Ownable {
         ConditionalToken bearToken = ConditionalToken(markets[_marketID].bearToken);
         ConditionalToken bullToken = ConditionalToken(markets[_marketID].bullToken);
 
-        require(bearToken.mint(msg.sender, _amountDiv));
-        require(bullToken.mint(msg.sender, _amountDiv));
+        require(bearToken.mint(msg.sender, _conditionalAmount));
+        require(bullToken.mint(msg.sender, _conditionalAmount));
 
         //Increase total deposited collateral
         markets[_marketID].totalDeposit = SafeMath.add(
@@ -312,7 +312,7 @@ contract Market is Ownable {
         );
 
         //Determine winning token address
-        ConditionalToken winningToken;
+        address winningTokenAddress;
 
         if (markets[_marketID].finalPrice > markets[_marketID].initialPrice) {
             winningToken = markets[_marketID].bearToken;
@@ -321,12 +321,17 @@ contract Market is Ownable {
         }
 
         //Deposit winningToken
+        ConditionalToken winningToken = ConditionalToken(winningTokenAddress);
+
         require(winningToken.transferFrom(msg.sender, this, _amount));
 
-        //TODO: Burn winningToken
+        //Burn winningToken
+        require(winningToken.burn(this, _amount));
 
         //Send collateral to user
-        require(markets[_marketID].collateralToken.transferFrom(this, msg.sender, _amount));
+        IERC20 collateral = IERC20(markets[_marketID].collateralToken);
+
+        require(collateral.transferFrom(this, msg.sender, _amount));
 
         //Increase total redemed collateral
         markets[_marketID].totalRedemption = SafeMath.add(
