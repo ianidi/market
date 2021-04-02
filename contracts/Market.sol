@@ -330,7 +330,7 @@ contract Market is Ownable {
         require(winningToken.transferFrom(msg.sender, address(this), _amount));
 
         //Burn winningToken
-        winningToken.burn(this, _amount);
+        winningToken.burn(address(this), _amount);
 
         //Send collateral to user
         IERC20 collateral = IERC20(markets[_marketID].collateralToken);
@@ -356,7 +356,7 @@ contract Market is Ownable {
     function setCollateral(
         address _collateral,
         bool _value,
-        uint _decimals
+        uint8 _decimals
     ) public onlyOwner {
         collateralList[_collateral] = _value;
         collateralDecimalsList[_collateral] = _decimals;
