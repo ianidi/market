@@ -43,16 +43,20 @@ contract Market is Ownable {
     mapping(uint => MarketStruct) public markets;
     mapping(uint => address) public baseCurrencyToChainlinkFeed;////////////////////////////////////////////////////////////////
     mapping(address => bool) public collateralList;
+    mapping(address => uint8) public collateralDecimalsList;
 
     AggregatorV3Interface internal priceFeed;
 
     address public poolManager;
 
     uint public currentMarketID = 1;
-    uint public constant CONDITIONAL_TOKEN_WEIGHT = SafeMath.mul(10**18, uint(10));
-    uint public constant COLLATERAL_TOKEN_WEIGHT  = SafeMath.mul(CONDITIONAL_TOKEN_WEIGHT, uint(2));
+    uint public constant CONDITIONAL_TOKEN_WEIGHT;
+    uint public constant COLLATERAL_TOKEN_WEIGHT;
 
     constructor(address _poolManager) public {
+        uint public constant CONDITIONAL_TOKEN_WEIGHT = SafeMath.mul(10**18, uint(10));
+        uint public constant COLLATERAL_TOKEN_WEIGHT  = SafeMath.mul(CONDITIONAL_TOKEN_WEIGHT, uint(2));
+
         poolManager = _poolManager;
     }
 
@@ -134,7 +138,7 @@ contract Market is Ownable {
             "Invalid duration"
         );
 
-        uint8 _collateralDecimals = IERC20(_collateralToken).decimals();
+        uint8 _collateralDecimals = collateralDecimalsList[_collateralToken];
 
         //Create two ERC20 tokens
         //TODO: title, decimals
@@ -348,11 +352,13 @@ contract Market is Ownable {
         baseCurrencyToChainlinkFeed[_baseCurrencyID] = _chainlinkFeed;
     }
 
-    function setCollateralList(
+    function setCollateral(
         address _collateral,
-        uint _value
+        bool _value,
+        uint _decimals
     ) public onlyOwner {
         collateralList[_collateral] = _value;
+        collateralDecimalsList[_collateral] = _decimals;
     }
 
     function viewMarketExist(uint _marketID) public view returns (bool) {
