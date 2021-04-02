@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ConditionalToken is ERC20, ERC20Detailed, Ownable {
+contract ConditionalToken is ERC20, Ownable {
     constructor(string memory _name, string memory _symbol, uint8 _decimals) ERC20(_name, _symbol, _decimals) public {}
 
     function mint(address account, uint256 amount)
