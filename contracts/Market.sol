@@ -46,7 +46,6 @@ contract Market is Ownable {
     mapping(address => bool) public collateralList;
 
     AggregatorV3Interface internal priceFeed;
-    IERC20 public collateral;
 
     address public poolManager;
 
@@ -157,7 +156,7 @@ contract Market is Ownable {
 
         require(_initialPrice > 0, "Chainlink error");
 
-        //Calculate token amount
+        //Calculate conditional tokens amount
         uint _conditionalAmount = SafeMath.div(_collateralAmount, uint(2));
 
         //Create balancer pool
@@ -278,14 +277,20 @@ contract Market is Ownable {
         require(markets[_marketID].status == Status.Running, "Invalid status");
         require(_amount > 0, "Invalid amount");
 
-        uint _amountDiv = _amount.div(2);
-
         //Deposit collateral
-        markets[_marketID].collateralToken.transferFrom(msg.sender, this, _amount);
+        IERC20 collateral = IERC20(markets[_marketID].collateralToken);
+
+        require(collateral.transferFrom(msg.sender, this, _amount));
+
+        //Calculate conditional tokens amount
+        uint _conditionalAmount = SafeMath.div(_amount, uint(2));
 
         //Mint both tokens for user
-        require(markets[_marketID].bearToken.mint(msg.sender, _amountDiv));
-        require(markets[_marketID].bullToken.mint(msg.sender, _amountDiv));
+        ConditionalToken bearToken = ConditionalToken(markets[_marketID].bearToken);
+        ConditionalToken bullToken = ConditionalToken(markets[_marketID].bullToken);
+
+        require(bearToken.mint(msg.sender, _amountDiv));
+        require(bullToken.mint(msg.sender, _amountDiv));
 
         //Increase total deposited collateral
         markets[_marketID].totalDeposit = SafeMath.add(
