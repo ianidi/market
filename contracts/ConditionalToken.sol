@@ -17,11 +17,4 @@ contract ConditionalToken is ERC20, Ownable {
     function decimals() public view override returns (uint8) {
         return _decimals;
     }
-
-    function mint(address account, uint256 amount)
-        public
-        onlyOwner
-    {
-        _mint(account, amount);
-    }
 }
