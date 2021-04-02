@@ -6,59 +6,56 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
 import "./balancer/BPool.sol";
-import "./balancer/BFactory.sol";
+import "./balancer/PoolManager.sol";
 import "./ConditionalToken.sol";
 
 contract Market is Ownable {
     //TODO: add more info to events
-    event Created(uint256 indexed marketID, uint256 _time);
-    event Paused(uint256 indexed marketID, uint256 _time);
-    event Resumed(uint256 indexed marketID, uint256 _time);
-    event Closed(uint256 indexed marketID, uint256 _time);
-    event Buy(uint256 indexed marketID, uint256 _time);
-    event Redeem(uint256 indexed marketID, uint256 _time);
-    event NewBearToken(address indexed contractAddress, uint256 _time);
-    event NewBullToken(address indexed contractAddress, uint256 _time);
+    event Created(uint indexed marketID, uint _time);
+    event Paused(uint indexed marketID, uint _time);
+    event Resumed(uint indexed marketID, uint _time);
+    event Closed(uint indexed marketID, uint _time);
+    event Buy(uint indexed marketID, uint _time);
+    event Redeem(uint indexed marketID, uint _time);
+    event NewBearToken(address indexed contractAddress, uint _time);
+    event NewBullToken(address indexed contractAddress, uint _time);
 
     enum Status {Running, Paused, Closed}
 
     struct MarketStruct {
         bool exist;
         Status status;
-        uint256 marketID;
-        uint256 baseCurrencyID;
+        uint marketID;
+        uint baseCurrencyID;
         uint80 initialRoundID;
         int256 initialPrice;
         int256 finalPrice;
-        uint256 created;
-        uint256 duration;
-        uint256 totalDeposit;
-        uint256 totalRedemption;
-        uint256 collateralDecimals;
+        uint created;
+        uint duration;
+        uint totalDeposit;
+        uint totalRedemption;
+        uint collateralDecimals;
         address collateralToken;
-        ConditionalToken bearToken;
-        ConditionalToken bullToken;
-        BPool pool;
+        address bearToken;
+        address bullToken;
+        address pool;
     }
 
-    mapping(uint256 => MarketStruct) public markets;
-    mapping(uint256 => address) public baseCurrencyToChainlinkFeed;
+    mapping(uint => MarketStruct) public markets;
+    mapping(uint => address) public baseCurrencyToChainlinkFeed;////////////////////////////////////////////////////////////////
     mapping(address => bool) public collateralList;
 
     AggregatorV3Interface internal priceFeed;
     IERC20 public collateral;
-    BFactory private factory;
 
-    uint256 public currentMarketID = 1;
-    uint256 public constant CONDITIONAL_TOKEN_WEIGHT = 10.mul(BPool.BONE);
-    uint256 public constant COLLATERAL_TOKEN_WEIGHT  = CONDITIONAL_TOKEN_WEIGHT.mul(2);
+    address public poolManager;
 
-    constructor() public {
-        factory = new BFactory();
+    uint public currentMarketID = 1;
+    uint public constant CONDITIONAL_TOKEN_WEIGHT = SafeMath.mul(BPool.BONE, uint(10));
+    uint public constant COLLATERAL_TOKEN_WEIGHT  = SafeMath.mul(CONDITIONAL_TOKEN_WEIGHT, uint(2));
 
-        baseCurrencyToChainlinkFeed[
-            uint256(1)
-        ] = 0x9326BFA02ADD2366b30bacB125260Af641031331; //Network: Kovan Aggregator: ETH/USD
+    constructor(address _poolManager) public {
+        poolManager = _poolManager;
     }
 
     /**
@@ -72,8 +69,8 @@ contract Market is Ownable {
         (
             uint80 roundID,
             int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
+            uint startedAt,
+            uint timeStamp,
             uint80 answeredInRound
         ) = feed.latestRoundData();
         return (roundID, price);
@@ -98,8 +95,8 @@ contract Market is Ownable {
         (
             uint80 id,
             int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
+            uint startedAt,
+            uint timeStamp,
             uint80 answeredInRound
         ) = feed.getRoundData(roundId);
         require(timeStamp > 0, "Round not complete");
@@ -118,39 +115,11 @@ contract Market is Ownable {
         return bullToken;
     }
 
-    function calcSwapFee(uint8 _decimals) public returns (uint8) {
-        return (10 ** _decimals).div(1000).mul(3); // 0.3%
+    function calcSwapFee(uint8 _decimals) public returns (uint) {
+        return SafeMath.mul(uint(3), SafeMath.div((10 ** _decimals), uint(1000))); // 0.3%
     }
 
-    function addConditionalToken(BPool _pool, ConditionalToken _conditionalToken, uint256 _conditionalBalance)
-        internal
-    {
-        //Mint bear and bull tokens
-        _conditionalToken.mint(address(this), _conditionalBalance);
-
-        addToken(_pool, _conditionalToken, _conditionalBalance, CONDITIONAL_TOKEN_WEIGHT);
-    }
-
-    function addCollateralToken(BPool _pool, IERC20 _collateralToken, uint256 _collateralBalance)
-        internal
-    {
-        //Pull collateral tokens from sender
-        _collateralToken.transferFrom(msg.sender, address(this), _collateralBalance);
-
-        addToken(_pool, _collateralToken, _collateralBalance, COLLATERAL_TOKEN_WEIGHT);
-    }
-
-    function addToken(BPool _pool, IERC20 token, uint256 balance, uint256 denorm)
-        internal
-    {
-        //Approve pool
-        token.approve(address(_pool), balance);
-
-        //Add token to the pool
-        _pool.bind(address(token), balance, denorm);
-    }
-
-    function create(uint256 _baseCurrencyID, uint256 _duration, address _collateralToken, uint256 _approvedBalance)
+    function create(uint _baseCurrencyID, uint _duration, address _collateralToken, uint _collateralAmount)
         public
         onlyOwner
     {
@@ -167,7 +136,10 @@ contract Market is Ownable {
             "Invalid duration"
         );
 
+        uint8 _collateralDecimals = IERC20(_collateralToken).decimals();
+
         //Create two ERC20 tokens
+        //TODO: title, decimals
         ConditionalToken _bearToken = cloneBearToken();
         ConditionalToken _bullToken = cloneBullToken();
 
@@ -185,27 +157,37 @@ contract Market is Ownable {
 
         require(_initialPrice > 0, "Chainlink error");
 
-        uint8 _collateralDecimals = IERC20(_collateralToken).decimals();
+        //Calculate token amount
+        uint _conditionalAmount = SafeMath.div(_collateralAmount, uint(2));
 
         //Create balancer pool
-        BPool _pool = factory.newBPool();
+        BPool _pool = poolManager.createPool();
 
-        //Estamate balance tokens
-        uint256 _initialBalance = _approvedBalance.div(2);
+        //Mint both tokens
+        _bearToken.mint(address(this), _conditionalAmount);
+        _bullToken.mint(address(this), _conditionalAmount);
+
+        //Deposit collateral token
+        _collateralToken.transferFrom(msg.sender, address(this), _collateralBalance);
+
+        //Approve tokens for binding by a pool
+        poolManager.approveToken(_collateralToken, address(_pool), _collateralAmount);
+        poolManager.approveToken(address(_bearToken), address(_pool), _conditionalAmount);
+        poolManager.approveToken(address(_bullToken), address(_pool), _conditionalAmount);
+
+        //Bind tokens to the pool
+        poolManager.bindToken(address(_pool), _collateralToken, _collateralAmount, COLLATERAL_TOKEN_WEIGHT);
+        poolManager.bindToken(address(_pool), address(_bearToken), _conditionalAmount, CONDITIONAL_TOKEN_WEIGHT);
+        poolManager.bindToken(address(_pool), address(_bullToken), _conditionalAmount, CONDITIONAL_TOKEN_WEIGHT);
 
         //Calculate swap fee
-        uint256 _swapFee = calcSwapFee(_collateralDecimals);
+        uint _swapFee = calcSwapFee(_collateralDecimals);
 
-        //Add conditional and collateral tokens to the pool
-        addConditionalToken(_pool, _bearToken, _initialBalance);
-        addConditionalToken(_pool, _bullToken, _initialBalance);
-        addCollateralToken(_pool, IERC20(_collateralToken), _initialBalance);
-
-        //Set the swap fee
-        _pool.setSwapFee(_swapFee);
+        //Set swap fee
+        poolManager.setFee(address(_pool), _swapFee);
 
         //Release the pool and allow public swaps
-        _pool.release();
+        poolManager.setPublic(address(_pool), true);
 
         MarketStruct memory marketStruct =
             MarketStruct({
@@ -220,11 +202,10 @@ contract Market is Ownable {
                 duration: _duration,
                 totalDeposit: 0,
                 totalRedemption: 0,
-                collateralDecimals: _collateralDecimals,
                 collateralToken: _collateralToken,
-                bearToken: _bearToken,
-                bullToken: _bullToken,
-                pool: _pool
+                bearToken: address(_bearToken),
+                bullToken: address(_bullToken),
+                pool: address(_pool)
             });
 
         markets[currentMarketID] = marketStruct;
@@ -235,7 +216,7 @@ contract Market is Ownable {
         currentMarketID++;
     }
 
-    function pause(uint256 _marketID) public onlyOwner {
+    function pause(uint _marketID) public onlyOwner {
         require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
 
@@ -244,7 +225,7 @@ contract Market is Ownable {
         emit Paused(_marketID, now);
     }
 
-    function resume(uint256 _marketID) public onlyOwner {
+    function resume(uint _marketID) public onlyOwner {
         require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Paused, "Invalid status");
 
@@ -253,7 +234,7 @@ contract Market is Ownable {
         emit Resumed(_marketID, now);
     }
 
-    function close(uint256 _marketID) public onlyOwner {
+    function close(uint _marketID) public onlyOwner {
         require(markets[_marketID].exist, "Market doesn't exist");
         require(
             markets[_marketID].status == Status.Running ||
@@ -292,12 +273,12 @@ contract Market is Ownable {
     }
 
     //Buy new token pair for collateral token
-    function buy(uint256 _marketID, uint256 _amount) external {
+    function buy(uint _marketID, uint _amount) external {
         require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Running, "Invalid status");
         require(_amount > 0, "Invalid amount");
 
-        uint256 _amountDiv = _amount.div(2);
+        uint _amountDiv = _amount.div(2);
 
         //Deposit collateral
         markets[_marketID].collateralToken.transferFrom(msg.sender, this, _amount);
@@ -315,7 +296,7 @@ contract Market is Ownable {
         emit Buy(_marketID, now);
     }
 
-    function redeem(uint256 _marketID, uint256 _amount) external {
+    function redeem(uint _marketID, uint _amount) external {
         require(markets[_marketID].exist, "Market doesn't exist");
         require(markets[_marketID].status == Status.Closed, "Invalid status");
         require(_amount > 0, "Invalid amount");
@@ -352,7 +333,7 @@ contract Market is Ownable {
     }
 
     function setBaseCurrencyToChainlinkFeed(
-        uint256 _baseCurrencyID,
+        uint _baseCurrencyID,
         address _chainlinkFeed
     ) public onlyOwner {
         baseCurrencyToChainlinkFeed[_baseCurrencyID] = _chainlinkFeed;
@@ -360,12 +341,12 @@ contract Market is Ownable {
 
     function setCollateralList(
         address _collateral,
-        uint256 _value
+        uint _value
     ) public onlyOwner {
         collateralList[_collateral] = _value;
     }
 
-    function viewMarketExist(uint256 _marketID) public view returns (bool) {
+    function viewMarketExist(uint _marketID) public view returns (bool) {
         return markets[_marketID].exist;
     }
 }

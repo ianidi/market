@@ -3,8 +3,7 @@ pragma solidity ^0.6.0;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./BFactory.sol";
 import "./BPool.sol";
-
-// TODO: use the IERC20 interface instead of the TToken
+import "../ConditionalToken.sol";
 
 contract PoolManager {
     address public owner;
@@ -45,7 +44,7 @@ contract PoolManager {
         public
         onlyOwner
     {
-        TToken token = TToken(_token);
+        ConditionalToken token = ConditionalToken(_token);
         token.approve(_currentPoolAddress, _balance);
         emit TokenApproved(_token, _currentPoolAddress, _balance);
     }
