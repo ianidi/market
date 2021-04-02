@@ -50,7 +50,7 @@ contract Market is Ownable {
     address public poolManager;
 
     uint public currentMarketID = 1;
-    uint public constant CONDITIONAL_TOKEN_WEIGHT = SafeMath.mul(BConst.BONE, uint(10));
+    uint public constant CONDITIONAL_TOKEN_WEIGHT = SafeMath.mul(10**18, uint(10));
     uint public constant COLLATERAL_TOKEN_WEIGHT  = SafeMath.mul(CONDITIONAL_TOKEN_WEIGHT, uint(2));
 
     constructor(address _poolManager) public {
