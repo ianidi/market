@@ -41,23 +41,23 @@ contract Market is Ownable {
     }
 
     mapping(uint => MarketStruct) public markets;
-    mapping(uint => address) public baseCurrencyToChainlinkFeed;////////////////////////////////////////////////////////////////
+    mapping(uint => address) public baseCurrencyToChainlinkFeed;//TODO: replace with API consumer
     mapping(address => bool) public collateralList;
     mapping(address => uint8) public collateralDecimalsList;
 
     AggregatorV3Interface internal priceFeed;
 
-    address public poolManager;
+    PoolManager public poolManager;
 
     uint public currentMarketID = 1;
-    uint public constant CONDITIONAL_TOKEN_WEIGHT;
-    uint public constant COLLATERAL_TOKEN_WEIGHT;
+    uint public CONDITIONAL_TOKEN_WEIGHT;
+    uint public COLLATERAL_TOKEN_WEIGHT;
 
     constructor(address _poolManager) public {
         CONDITIONAL_TOKEN_WEIGHT = SafeMath.mul(10**18, uint(10));
         COLLATERAL_TOKEN_WEIGHT  = SafeMath.mul(CONDITIONAL_TOKEN_WEIGHT, uint(2));
 
-        poolManager = _poolManager;
+        poolManager = PoolManager(_poolManager);
     }
 
     /**
