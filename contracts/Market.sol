@@ -169,8 +169,10 @@ contract Market is Ownable {
         _bearToken.mint(address(this), _conditionalAmount);
         _bullToken.mint(address(this), _conditionalAmount);
 
+        IERC20 collateral = IERC20(_collateralToken);
+
         //Deposit collateral token
-        _collateralToken.transferFrom(msg.sender, address(this), _collateralAmount);
+        collateral.transferFrom(msg.sender, address(this), _collateralAmount);
 
         //Approve tokens for binding by a pool
         poolManager.approveToken(_collateralToken, address(_pool), _collateralAmount);
@@ -280,18 +282,17 @@ contract Market is Ownable {
         require(markets[_marketID].status == Status.Running, "Invalid status");
         require(_amount > 0, "Invalid amount");
 
-        //Deposit collateral
         IERC20 collateral = IERC20(markets[_marketID].collateralToken);
+        ConditionalToken bearToken = ConditionalToken(markets[_marketID].bearToken);
+        ConditionalToken bullToken = ConditionalToken(markets[_marketID].bullToken);
 
+        //Deposit collateral
         require(collateral.transferFrom(msg.sender, this, _amount));
 
         //Calculate conditional tokens amount
         uint _conditionalAmount = SafeMath.div(_amount, uint(2));
 
         //Mint both tokens for user
-        ConditionalToken bearToken = ConditionalToken(markets[_marketID].bearToken);
-        ConditionalToken bullToken = ConditionalToken(markets[_marketID].bullToken);
-
         require(bearToken.mint(msg.sender, _conditionalAmount));
         require(bullToken.mint(msg.sender, _conditionalAmount));
 
