@@ -167,7 +167,7 @@ contract Market is Ownable {
         _bullToken._mint(address(this), _conditionalAmount);
 
         //Deposit collateral token
-        _collateralToken.transferFrom(msg.sender, address(this), _collateralBalance);
+        _collateralToken.transferFrom(msg.sender, address(this), _collateralAmount);
 
         //Approve tokens for binding by a pool
         poolManager.approveToken(_collateralToken, address(_pool), _collateralAmount);
@@ -315,9 +315,9 @@ contract Market is Ownable {
         address winningTokenAddress;
 
         if (markets[_marketID].finalPrice > markets[_marketID].initialPrice) {
-            winningToken = markets[_marketID].bearToken;
+            winningTokenAddress = markets[_marketID].bearToken;
         } else {
-            winningToken = markets[_marketID].bullToken;
+            winningTokenAddress = markets[_marketID].bullToken;
         }
 
         //Deposit winningToken
