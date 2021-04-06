@@ -18,7 +18,7 @@ contract Market is Ownable, ChainlinkClient {
     event Redeem(uint indexed marketID, uint _time);
     event NewToken(address indexed contractAddress, uint _time);
 
-    enum Status {Running, Paused, Closed}
+    enum Status {Running, Pending, Paused, Closed}
 
     struct MarketStruct {
         bool exist;
@@ -41,6 +41,7 @@ contract Market is Ownable, ChainlinkClient {
     mapping(uint => address) public baseCurrencyToChainlinkFeed;//TODO: replace with API consumer
     mapping(address => bool) public collateralList;
     mapping(address => uint8) public collateralDecimalsList;
+    mapping(bytes32 => uint) public requestToMarketID;
 
     PoolManager public poolManager;
 
@@ -59,36 +60,33 @@ contract Market is Ownable, ChainlinkClient {
         poolManager = PoolManager(_poolManager);
 
         setPublicChainlinkToken();
-        oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
-        jobId = "29fa9aa13bf1468788b7cc4a500a45b8";
+        oracle = 0x72f3dFf4CD17816604dd2df6C2741e739484CA62;
+        jobId = "bfc49c95584c4b10b61fc88bb2023d68";
         fee = 0.1 * 10 ** 18; // 0.1 LINK
     }
 
-    /**
-     * Create a Chainlink request to retrieve API response, find the target
-     * data, then multiply by 1000000000000000000 (to remove decimal places from data).
-     */
-    function requestVolumeData() public returns (bytes32 requestId) 
-    {
+    function requestPrice(bytes32 coinIDFrom, bytes32 coidIDTo) public returns (bytes32 requestId) {
         Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
         
-        request.add("get", "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD");
-        request.add("path", "USD");
+        request.add("get", "https://api.coingecko.com/api/v3/simple/price?ids="+coinIDFrom+"&vs_currencies="+coidIDTo);
+        request.add("path", "price");
         
-        // Multiply the result by 1000000000000000000 to remove decimals
-        // int timesAmount = 10**18;
-        // request.addInt("times", timesAmount);
-        
-        // Sends the request
         return sendChainlinkRequestTo(oracle, request, fee);
     }
     
     /**
-     * Receive the response in the form of uint256
+     * Receive the response in the form of int256
      */ 
-    function fulfill(bytes32 _requestId, uint256 _volume) public recordChainlinkFulfillment(_requestId)
+    function fulfill(bytes32 _requestId, int256 _price) public recordChainlinkFulfillment(_requestId)
     {
-        volume = _volume;
+
+        require(
+            requestToMarketID[_requestId] > 0,
+            "Invalid request"
+        );
+        
+        markets[requestToMarketID[_requestId]].initialPrice = _price;
+        markets[requestToMarketID[_requestId]].status = Status.Running;
     }
 
     function cloneToken(string memory _name, string memory _symbol, uint8 _decimals) internal onlyOwner returns (ConditionalToken) {
@@ -125,12 +123,13 @@ contract Market is Ownable, ChainlinkClient {
         ConditionalToken _bullToken = cloneToken("Bull", "Bull", _collateralDecimals);
 
         //TODO: Get chainlink price feed by _baseCurrencyID
-        address _chainlinkPriceFeed =
-            baseCurrencyToChainlinkFeed[_baseCurrencyID];
+        // address _chainlinkPriceFeed =
+        //     baseCurrencyToChainlinkFeed[_baseCurrencyID];
 
-        int256 _initialPrice = price;
+        // int256 _initialPrice = price;
 
-        require(_initialPrice > 0, "Chainlink error");
+        // require(_initialPrice > 0, "Chainlink error");
+        
 
         //Calculate conditional tokens amount
         uint _conditionalAmount = SafeMath.div(_collateralAmount, uint(2));
@@ -169,7 +168,7 @@ contract Market is Ownable, ChainlinkClient {
         MarketStruct memory marketStruct =
             MarketStruct({
                 exist: true,
-                status: Status.Running,
+                status: Status.Pending,
                 marketID: currentMarketID,
                 baseCurrencyID: _baseCurrencyID,
                 initialPrice: _initialPrice,
@@ -334,3 +333,9 @@ contract Market is Ownable, ChainlinkClient {
         return markets[_marketID].exist;
     }
 }
+
+    function setChainlink(address _oracle, bytes32 _jobId, uint256 _fee) public onlyOwner {
+        oracle = _oracle;
+        jobId = _jobId;
+        fee = _fee;
+    }
