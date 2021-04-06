@@ -122,15 +122,6 @@ contract Market is Ownable, ChainlinkClient {
         ConditionalToken _bearToken = cloneToken("Bear", "Bear", _collateralDecimals);
         ConditionalToken _bullToken = cloneToken("Bull", "Bull", _collateralDecimals);
 
-        //TODO: Get chainlink price feed by _baseCurrencyID
-        // address _chainlinkPriceFeed =
-        //     baseCurrencyToChainlinkFeed[_baseCurrencyID];
-
-        // int256 _initialPrice = price;
-
-        // require(_initialPrice > 0, "Chainlink error");
-
-
         //Calculate conditional tokens amount
         uint _conditionalAmount = SafeMath.div(_collateralAmount, uint(2));
 
