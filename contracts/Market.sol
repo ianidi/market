@@ -129,7 +129,7 @@ contract Market is Ownable, ChainlinkClient {
         // int256 _initialPrice = price;
 
         // require(_initialPrice > 0, "Chainlink error");
-        
+
 
         //Calculate conditional tokens amount
         uint _conditionalAmount = SafeMath.div(_collateralAmount, uint(2));
@@ -184,6 +184,9 @@ contract Market is Ownable, ChainlinkClient {
             });
 
         markets[currentMarketID] = marketStruct;
+
+        bytes32 requestID = requestPrice();
+        requestToMarketID[requestID] = currentMarketID;
 
         emit Created(currentMarketID, now);
 
